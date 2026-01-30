@@ -1,0 +1,92 @@
+﻿<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>@ViewData["Title"] - Evaluación de Liderazgo</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="~/css/site.css" asp-append-version="true" />
+</head>
+<body class="bg-gray-50">
+    @if (Context.Session.GetInt32("UserId").HasValue)
+    {
+        <!-- Header para usuarios autenticados -->
+        <header class="bg-white shadow">
+            <nav class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 flex justify-between items-center">
+                <div class="flex items-center space-x-8">
+                    <a asp-controller="Home" asp-action="Index" class="text-xl font-bold text-blue-600">
+                        <span class="text-2xl">📊</span> Evaluación Liderazgo
+                    </a>
+                    <div class="hidden md:flex space-x-6">
+                        <a asp-controller="Encuesta" asp-action="Index" class="text-gray-700 hover:text-blue-600 transition">Mis Encuestas</a>
+                        <a asp-controller="Encuesta" asp-action="Create" class="text-gray-700 hover:text-blue-600 transition">Nueva Encuesta</a>
+                    </div>
+                </div>
+                <div class="flex items-center space-x-4">
+                    <span class="text-gray-600">@Context.Session.GetString("UserName")</span>
+                    <a asp-controller="Auth" asp-action="Logout" class="bg-red-500 text-white px-4 py-2 rounded-lg hover:bg-red-600 transition">
+                        Cerrar Sesión
+                    </a>
+                </div>
+            </nav>
+        </header>
+    }
+
+    <main class="flex-grow">
+        <!-- Alertas -->
+        @if (TempData["Success"] != null)
+        {
+            <div class="max-w-7xl mx-auto mt-4 px-4 sm:px-6 lg:px-8">
+                <div class="bg-green-100 border-l-4 border-green-500 text-green-700 p-4 rounded">
+                    <p class="font-bold">¡Éxito!</p>
+                    <p>@TempData["Success"]</p>
+                </div>
+            </div>
+        }
+
+        @if (TempData["Error"] != null)
+        {
+            <div class="max-w-7xl mx-auto mt-4 px-4 sm:px-6 lg:px-8">
+                <div class="bg-red-100 border-l-4 border-red-500 text-red-700 p-4 rounded">
+                    <p class="font-bold">Error</p>
+                    <p>@TempData["Error"]</p>
+                </div>
+            </div>
+        }
+
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+            @RenderBody()
+        </div>
+    </main>
+
+    <footer class="bg-gray-800 text-white mt-16">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+            <div class="grid md:grid-cols-3 gap-8">
+                <div>
+                    <h3 class="font-bold text-lg mb-2">Evaluación Liderazgo</h3>
+                    <p class="text-gray-400">Sistema de evaluación de competencias de liderazgo</p>
+                </div>
+                <div>
+                    <h4 class="font-bold mb-2">Navegación</h4>
+                    <ul class="space-y-1 text-gray-400">
+                        <li><a href="#" class="hover:text-white transition">Inicio</a></li>
+                        <li><a href="#" class="hover:text-white transition">Encuestas</a></li>
+                        <li><a href="#" class="hover:text-white transition">Reportes</a></li>
+                    </ul>
+                </div>
+                <div>
+                    <h4 class="font-bold mb-2">Soporte</h4>
+                    <p class="text-gray-400 text-sm">contacto@evaluacion.com</p>
+                    <p class="text-gray-400 text-sm">+56 2 XXXX XXXX</p>
+                </div>
+            </div>
+            <div class="border-t border-gray-700 mt-8 pt-8 text-center text-gray-400">
+                <p>&copy; 2026 Evaluación de Liderazgo. Todos los derechos reservados.</p>
+            </div>
+        </div>
+    </footer>
+
+    <script src="~/js/site.js" asp-append-version="true"></script>
+    @await RenderSectionAsync("Scripts", required: false)
+</body>
+</html>

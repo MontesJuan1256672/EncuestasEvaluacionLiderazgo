@@ -1,0 +1,128 @@
+@model EncuestasEvaluacionLiderazgo.Models.Encuesta
+
+@{
+    ViewData["Title"] = "Crear Nueva Encuesta";
+}
+
+<div class="max-w-4xl mx-auto py-8">
+    <!-- Encabezado -->
+    <div class="mb-8">
+        <h1 class="text-4xl font-bold text-gray-900 mb-2">Crear Nueva Encuesta</h1>
+        <p class="text-gray-600">Completa los campos para crear una encuesta de evaluación de liderazgo</p>
+    </div>
+
+    <!-- Formulario -->
+    <form method="post" asp-action="Create" class="bg-white rounded-lg shadow-md p-8">
+        <!-- Validación General -->
+        @if (!ViewData.ModelState.IsValid)
+        {
+            <div class="bg-red-100 border-l-4 border-red-500 text-red-700 p-4 rounded mb-6">
+                <p class="font-bold">Errores en el formulario:</p>
+                <ul class="mt-2 space-y-1">
+                    @foreach (var modelState in ViewData.ModelState.Values)
+                    {
+                        @foreach (var error in modelState.Errors)
+                        {
+                            <li class="text-sm">• @error.ErrorMessage</li>
+                        }
+                    }
+                </ul>
+            </div>
+        }
+
+        <div class="space-y-6">
+            <!-- Título -->
+            <div>
+                <label for="titulo" class="block text-gray-700 font-bold mb-2">
+                    Título de la Encuesta <span class="text-red-600">*</span>
+                </label>
+                <input type="text" id="titulo" name="titulo" required
+                       class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                       placeholder="Ej: Evaluación de Liderazgo 2026"
+                       asp-for="Titulo" />
+                <p class="text-gray-500 text-sm mt-1">El título es visible para todos los participantes</p>
+            </div>
+
+            <!-- Descripción -->
+            <div>
+                <label for="descripcion" class="block text-gray-700 font-bold mb-2">
+                    Descripción <span class="text-red-600">*</span>
+                </label>
+                <textarea id="descripcion" name="descripcion" required rows="4"
+                          class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                          placeholder="Describe el propósito y contexto de esta encuesta..."
+                          asp-for="Descripcion"></textarea>
+                <p class="text-gray-500 text-sm mt-1">Proporciona contexto sobre la evaluación</p>
+            </div>
+
+            <!-- Fecha de Vencimiento -->
+            <div>
+                <label for="fechaVencimiento" class="block text-gray-700 font-bold mb-2">
+                    Fecha de Vencimiento <span class="text-red-600">*</span>
+                </label>
+                <input type="date" id="fechaVencimiento" name="fechaVencimiento" required
+                       class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                       asp-for="FechaVencimiento" />
+                <p class="text-gray-500 text-sm mt-1">Los participantes no podrán responder después de esta fecha</p>
+            </div>
+
+            <!-- Información Adicional -->
+            <div class="bg-blue-50 border border-blue-200 rounded-lg p-4">
+                <div class="flex space-x-3">
+                    <span class="text-2xl">ℹ️</span>
+                    <div>
+                        <h4 class="font-bold text-blue-900">Próximos Pasos</h4>
+                        <p class="text-blue-800 text-sm mt-1">
+                            Después de crear la encuesta, podrás agregar preguntas, modificarla y publicarla para que los participantes puedan responder.
+                        </p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Requisitos -->
+            <div class="bg-amber-50 border border-amber-200 rounded-lg p-4">
+                <h4 class="font-bold text-amber-900 mb-2">Requisitos Mínimos</h4>
+                <ul class="text-amber-900 text-sm space-y-1">
+                    <li>✓ Título: Mínimo 5 caracteres</li>
+                    <li>✓ Descripción: Mínimo 10 caracteres</li>
+                    <li>✓ Fecha de vencimiento: Debe ser en el futuro</li>
+                    <li>✓ Al menos 1 pregunta antes de publicar</li>
+                </ul>
+            </div>
+        </div>
+
+        <!-- Botones de Acción -->
+        <div class="flex space-x-4 mt-12">
+            <button type="submit" class="flex-1 bg-blue-600 text-white py-3 rounded-lg hover:bg-blue-700 transition font-bold text-lg">
+                ✓ Crear Encuesta
+            </button>
+            <a href="javascript:history.back()" class="flex-1 bg-gray-300 text-gray-800 py-3 rounded-lg hover:bg-gray-400 transition font-bold text-lg text-center">
+                ← Cancelar
+            </a>
+        </div>
+
+        <!-- Nota Legal -->
+        <div class="text-center text-gray-500 text-xs mt-6">
+            <p>
+                Al crear esta encuesta, aceptas que se almacenarán los datos personales de los participantes
+                conforme a nuestra <a href="#" class="underline">Política de Privacidad</a>
+            </p>
+        </div>
+    </form>
+</div>
+
+@section Scripts {
+    <script>
+        // Validación de fecha en el cliente
+        document.getElementById('fechaVencimiento').addEventListener('change', function() {
+            const selectedDate = new Date(this.value);
+            const today = new Date();
+            today.setHours(0, 0, 0, 0);
+
+            if (selectedDate < today) {
+                alert('La fecha de vencimiento debe ser en el futuro');
+                this.value = '';
+            }
+        });
+    </script>
+}

@@ -1,0 +1,67 @@
+{
+  "runtimeTarget": {
+    "name": ".NETCoreApp,Version=v9.0",
+    "signature": ""
+  },
+  "compilationOptions": {},
+  "targets": {
+    ".NETCoreApp,Version=v9.0": {
+      "EncuestasEvaluacionLiderazgo/1.0.0": {
+        "dependencies": {
+          "CentrexEncrypt": "1.0.0.0",
+          "ConnStringsTelvista": "1.0.0.0",
+          "SqlHelper": "1.0.0.0"
+        },
+        "runtime": {
+          "EncuestasEvaluacionLiderazgo.dll": {}
+        }
+      },
+      "CentrexEncrypt/1.0.0.0": {
+        "runtime": {
+          "CentrexEncrypt.dll": {
+            "assemblyVersion": "1.0.0.0",
+            "fileVersion": "1.0.0.0"
+          }
+        }
+      },
+      "ConnStringsTelvista/1.0.0.0": {
+        "runtime": {
+          "ConnStringsTelvista.dll": {
+            "assemblyVersion": "1.0.0.0",
+            "fileVersion": "1.0.0.0"
+          }
+        }
+      },
+      "SqlHelper/1.0.0.0": {
+        "runtime": {
+          "SqlHelper.dll": {
+            "assemblyVersion": "1.0.0.0",
+            "fileVersion": "1.0.0.0"
+          }
+        }
+      }
+    }
+  },
+  "libraries": {
+    "EncuestasEvaluacionLiderazgo/1.0.0": {
+      "type": "project",
+      "serviceable": false,
+      "sha512": ""
+    },
+    "CentrexEncrypt/1.0.0.0": {
+      "type": "reference",
+      "serviceable": false,
+      "sha512": ""
+    },
+    "ConnStringsTelvista/1.0.0.0": {
+      "type": "reference",
+      "serviceable": false,
+      "sha512": ""
+    },
+    "SqlHelper/1.0.0.0": {
+      "type": "reference",
+      "serviceable": false,
+      "sha512": ""
+    }
+  }
+}

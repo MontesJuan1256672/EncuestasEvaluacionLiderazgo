@@ -1,0 +1,228 @@
+@model EncuestasEvaluacionLiderazgo.Models.Encuesta
+
+@{
+    ViewData["Title"] = @Model.Titulo;
+}
+
+<div class="max-w-4xl mx-auto py-8">
+    <!-- Encabezado de la Encuesta -->
+    <div class="bg-white rounded-lg shadow-md p-8 mb-8 border-l-4 border-blue-600">
+        <div class="flex justify-between items-start mb-4">
+            <div>
+                <h1 class="text-4xl font-bold text-gray-900 mb-2">@Model.Titulo</h1>
+                <p class="text-gray-600 text-lg">@Model.Descripcion</p>
+            </div>
+            <span class="@GetEstadoClase(Model.Estado) text-sm font-bold px-4 py-2 rounded-full">
+                @GetEstadoTexto(Model.Estado)
+            </span>
+        </div>
+
+        <!-- Info de la Encuesta -->
+        <div class="grid grid-cols-2 md:grid-cols-4 gap-4 mt-6 pt-6 border-t">
+            <div>
+                <p class="text-gray-600 text-sm">Creada el</p>
+                <p class="font-bold text-gray-900">@Model.FechaCreacion.ToString("dd/MM/yyyy")</p>
+            </div>
+            <div>
+                <p class="text-gray-600 text-sm">Vencimiento</p>
+                <p class="font-bold text-gray-900">@Model.FechaVencimiento.ToString("dd/MM/yyyy")</p>
+            </div>
+            <div>
+                <p class="text-gray-600 text-sm">Preguntas</p>
+                <p class="font-bold text-gray-900">@Model.Preguntas?.Count ?? 0</p>
+            </div>
+            <div>
+                <p class="text-gray-600 text-sm">Respuestas</p>
+                <p class="font-bold text-gray-900">@Model.Respuestas?.Count ?? 0</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Formulario de Respuestas -->
+    @if (Model.Estado == EncuestasEvaluacionLiderazgo.Models.EstadoEncuesta.Publicada)
+    {
+        <form method="post" asp-controller="Encuesta" asp-action="Submit" asp-route-encuestaId="@Model.Id">
+            <div class="space-y-8">
+                @if (Model.Preguntas != null && Model.Preguntas.Any())
+                {
+                    @foreach (var pregunta in Model.Preguntas.OrderBy(p => p.Orden))
+                    {
+                        <div class="bg-white rounded-lg shadow-md p-8 border-l-4 border-gray-300">
+                            <!-- Número y Título de la Pregunta -->
+                            <div class="mb-6">
+                                <div class="flex items-start space-x-4">
+                                    <span class="flex-shrink-0 inline-flex items-center justify-center h-8 w-8 rounded-full bg-blue-100 text-blue-600 font-bold">
+                                        @(Model.Preguntas.ToList().IndexOf(pregunta) + 1)
+                                    </span>
+                                    <div class="flex-1">
+                                        <h3 class="text-lg font-bold text-gray-900">
+                                            @pregunta.Texto
+                                            @if (pregunta.Requerida)
+                                            {
+                                                <span class="text-red-600 ml-1">*</span>
+                                            }
+                                        </h3>
+                                        <p class="text-gray-500 text-sm mt-1">@GetTipoPreguntaTexto(pregunta.Tipo)</p>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Opciones de Respuesta según tipo -->
+                            <div class="ml-12">
+                                @switch (pregunta.Tipo)
+                                {
+                                    case EncuestasEvaluacionLiderazgo.Models.TipoPregunta.TextoCorto:
+                                        <input type="text" name="pregunta_@pregunta.Id" 
+                                               class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                                               placeholder="Escribe tu respuesta aquí..." 
+                                               @(pregunta.Requerida ? "required" : "") />
+                                        break;
+
+                                    case EncuestasEvaluacionLiderazgo.Models.TipoPregunta.TextoLargo:
+                                        <textarea name="pregunta_@pregunta.Id" rows="4"
+                                                  class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                                                  placeholder="Escribe tu respuesta aquí..."
+                                                  @(pregunta.Requerida ? "required" : "")></textarea>
+                                        break;
+
+                                    case EncuestasEvaluacionLiderazgo.Models.TipoPregunta.OpcionUnica:
+                                        <div class="space-y-3">
+                                            @if (pregunta.Opciones != null)
+                                            {
+                                                @foreach (var opcion in pregunta.Opciones.OrderBy(o => o.Orden))
+                                                {
+                                                    <label class="flex items-center p-3 border border-gray-200 rounded-lg hover:bg-blue-50 cursor-pointer transition">
+                                                        <input type="radio" name="pregunta_@pregunta.Id" value="@opcion.Id"
+                                                               class="h-4 w-4 text-blue-600"
+                                                               @(pregunta.Requerida ? "required" : "") />
+                                                        <span class="ml-3 text-gray-700">@opcion.Texto</span>
+                                                    </label>
+                                                }
+                                            }
+                                        </div>
+                                        break;
+
+                                    case EncuestasEvaluacionLiderazgo.Models.TipoPregunta.OpcionMultiple:
+                                        <div class="space-y-3">
+                                            @if (pregunta.Opciones != null)
+                                            {
+                                                @foreach (var opcion in pregunta.Opciones.OrderBy(o => o.Orden))
+                                                {
+                                                    <label class="flex items-center p-3 border border-gray-200 rounded-lg hover:bg-blue-50 cursor-pointer transition">
+                                                        <input type="checkbox" name="pregunta_@pregunta.Id" value="@opcion.Id"
+                                                               class="h-4 w-4 text-blue-600 rounded" />
+                                                        <span class="ml-3 text-gray-700">@opcion.Texto</span>
+                                                    </label>
+                                                }
+                                            }
+                                        </div>
+                                        break;
+
+                                    case EncuestasEvaluacionLiderazgo.Models.TipoPregunta.Escala:
+                                        <div class="flex space-x-2">
+                                            @for (int i = 1; i <= 5; i++)
+                                            {
+                                                <label class="flex flex-col items-center cursor-pointer group">
+                                                    <input type="radio" name="pregunta_@pregunta.Id" value="@i"
+                                                           class="h-4 w-4 text-blue-600"
+                                                           @(pregunta.Requerida ? "required" : "") />
+                                                    <span class="mt-2 text-2xl group-hover:scale-125 transition-transform">
+                                                        @GetEstrella(i)
+                                                    </span>
+                                                    <span class="text-xs text-gray-600 mt-1">@i</span>
+                                                </label>
+                                            }
+                                        </div>
+                                        break;
+                                }
+                            </div>
+                        </div>
+                    }
+                }
+                else
+                {
+                    <div class="text-center py-12 bg-gray-100 rounded-lg">
+                        <p class="text-gray-600">Esta encuesta aún no tiene preguntas</p>
+                    </div>
+                }
+            </div>
+
+            <!-- Botones de Acción -->
+            <div class="flex space-x-4 mt-12">
+                <button type="submit" class="flex-1 bg-green-600 text-white py-3 rounded-lg hover:bg-green-700 transition font-bold text-lg">
+                    ✓ Enviar Encuesta
+                </button>
+                <a href="javascript:history.back()" class="flex-1 bg-gray-300 text-gray-800 py-3 rounded-lg hover:bg-gray-400 transition font-bold text-lg text-center">
+                    ← Cancelar
+                </a>
+            </div>
+        </form>
+    }
+    else
+    {
+        <!-- Encuesta no disponible -->
+        <div class="bg-yellow-100 border-l-4 border-yellow-600 text-yellow-800 p-6 rounded-lg">
+            <p class="font-bold text-lg">⚠️ Encuesta no disponible</p>
+            <p class="mt-2">Esta encuesta se encuentra en estado: <strong>@GetEstadoTexto(Model.Estado)</strong></p>
+            <p class="mt-2">Por favor contacta al administrador si crees que esto es un error.</p>
+        </div>
+    }
+</div>
+
+@section Scripts {
+    <script>
+        // Validaciones adicionales si es necesario
+    </script>
+}
+
+@functions {
+    private string GetEstadoClase(EncuestasEvaluacionLiderazgo.Models.EstadoEncuesta estado)
+    {
+        return estado switch
+        {
+            EncuestasEvaluacionLiderazgo.Models.EstadoEncuesta.Borrador => "bg-gray-100 text-gray-800",
+            EncuestasEvaluacionLiderazgo.Models.EstadoEncuesta.Publicada => "bg-green-100 text-green-800",
+            EncuestasEvaluacionLiderazgo.Models.EstadoEncuesta.Cerrada => "bg-orange-100 text-orange-800",
+            EncuestasEvaluacionLiderazgo.Models.EstadoEncuesta.Archivada => "bg-blue-100 text-blue-800",
+            _ => "bg-gray-100 text-gray-800"
+        };
+    }
+
+    private string GetEstadoTexto(EncuestasEvaluacionLiderazgo.Models.EstadoEncuesta estado)
+    {
+        return estado switch
+        {
+            EncuestasEvaluacionLiderazgo.Models.EstadoEncuesta.Borrador => "Borrador",
+            EncuestasEvaluacionLiderazgo.Models.EstadoEncuesta.Publicada => "Publicada",
+            EncuestasEvaluacionLiderazgo.Models.EstadoEncuesta.Cerrada => "Cerrada",
+            EncuestasEvaluacionLiderazgo.Models.EstadoEncuesta.Archivada => "Archivada",
+            _ => "Desconocido"
+        };
+    }
+
+    private string GetTipoPreguntaTexto(EncuestasEvaluacionLiderazgo.Models.TipoPregunta tipo)
+    {
+        return tipo switch
+        {
+            EncuestasEvaluacionLiderazgo.Models.TipoPregunta.TextoCorto => "Texto corto",
+            EncuestasEvaluacionLiderazgo.Models.TipoPregunta.TextoLargo => "Párrafo",
+            EncuestasEvaluacionLiderazgo.Models.TipoPregunta.OpcionUnica => "Opción única",
+            EncuestasEvaluacionLiderazgo.Models.TipoPregunta.OpcionMultiple => "Opciones múltiples",
+            EncuestasEvaluacionLiderazgo.Models.TipoPregunta.Escala => "Escala",
+            _ => "Desconocido"
+        };
+    }
+
+    private string GetEstrella(int valor)
+    {
+        return valor switch
+        {
+            1 => "⭐",
+            2 => "⭐⭐",
+            3 => "⭐⭐⭐",
+            4 => "⭐⭐⭐⭐",
+            5 => "⭐⭐⭐⭐⭐",
+            _ => ""
+        };
+    }
+}

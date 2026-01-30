@@ -1,0 +1,94 @@
+@{
+    ViewData["Title"] = "Iniciar Sesión";
+    Layout = null;
+}
+
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>@ViewData["Title"] - Evaluación de Liderazgo</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-gradient-to-br from-blue-600 to-blue-800 min-h-screen flex items-center justify-center">
+    <div class="max-w-md w-full">
+        <!-- Card de Login -->
+        <div class="bg-white rounded-lg shadow-2xl p-8">
+            <!-- Logo/Header -->
+            <div class="text-center mb-8">
+                <div class="inline-block text-5xl mb-4">📊</div>
+                <h1 class="text-3xl font-bold text-gray-800">Evaluación Liderazgo</h1>
+                <p class="text-gray-600 mt-2">Sistema de Evaluación de Competencias</p>
+            </div>
+
+            <!-- Formulario de Login -->
+            <form asp-action="Login" method="post" class="space-y-4">
+                <!-- Validación general -->
+                @if (!ViewData.ModelState.IsValid)
+                {
+                    <div class="bg-red-100 border-l-4 border-red-500 text-red-700 p-4 rounded" role="alert">
+                        <p class="font-bold">Error de autenticación</p>
+                        @foreach (var modelState in ViewData.ModelState.Values)
+                        {
+                            @foreach (var error in modelState.Errors)
+                            {
+                                <p class="text-sm">• @error.ErrorMessage</p>
+                            }
+                        }
+                    </div>
+                }
+
+                <!-- Campo Email -->
+                <div>
+                    <label for="email" class="block text-gray-700 font-semibold mb-2">Correo Electrónico</label>
+                    <input type="email" id="email" name="email" required
+                        class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 transition"
+                        placeholder="tu@email.com" />
+                </div>
+
+                <!-- Campo Contraseña -->
+                <div>
+                    <label for="contraseña" class="block text-gray-700 font-semibold mb-2">Contraseña</label>
+                    <input type="password" id="contraseña" name="contraseña" required
+                        class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 transition"
+                        placeholder="••••••••" />
+                </div>
+
+                <!-- Botón Login -->
+                <button type="submit" class="w-full bg-blue-600 text-white font-bold py-2 rounded-lg hover:bg-blue-700 transition duration-300 mt-6">
+                    Iniciar Sesión
+                </button>
+
+                <!-- Separador -->
+                <div class="relative my-6">
+                    <div class="absolute inset-0 flex items-center">
+                        <div class="w-full border-t border-gray-300"></div>
+                    </div>
+                    <div class="relative flex justify-center text-sm">
+                        <span class="px-2 bg-white text-gray-500">o</span>
+                    </div>
+                </div>
+
+                <!-- Links -->
+                <div class="text-center space-y-3">
+                    <p class="text-gray-600">
+                        ¿No tienes cuenta?
+                        <a asp-action="Register" class="text-blue-600 font-bold hover:underline">Regístrate aquí</a>
+                    </p>
+                    <p class="text-gray-600">
+                        <a href="#" class="text-blue-600 font-bold hover:underline text-sm">¿Olvidaste tu contraseña?</a>
+                    </p>
+                </div>
+            </form>
+        </div>
+
+        <!-- Footer -->
+        <div class="text-center mt-8 text-white">
+            <p class="text-sm opacity-75">
+                © 2026 Sistema de Evaluación de Liderazgo. Todos los derechos reservados.
+            </p>
+        </div>
+    </div>
+</body>
+</html>

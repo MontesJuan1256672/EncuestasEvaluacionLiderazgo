@@ -1,0 +1,144 @@
+@model IEnumerable<EncuestasEvaluacionLiderazgo.Models.Encuesta>
+
+@{
+    ViewData["Title"] = "Mis Encuestas";
+}
+
+<div class="py-8">
+    <!-- Header -->
+    <div class="flex justify-between items-center mb-8">
+        <div>
+            <h1 class="text-4xl font-bold text-gray-900">Mis Encuestas</h1>
+            <p class="text-gray-600 mt-2">Gestiona tus encuestas de evaluación de liderazgo</p>
+        </div>
+        <a asp-action="Create" class="bg-blue-600 text-white px-6 py-3 rounded-lg hover:bg-blue-700 transition inline-flex items-center space-x-2">
+            <span>➕</span>
+            <span>Nueva Encuesta</span>
+        </a>
+    </div>
+
+    @if (Model.Any())
+    {
+        <!-- Filtros (opcional) -->
+        <div class="mb-6 flex space-x-4">
+            <button class="px-4 py-2 bg-white border border-gray-300 rounded-lg text-gray-700 hover:border-gray-400 transition">
+                Todas
+            </button>
+            <button class="px-4 py-2 bg-white border border-gray-300 rounded-lg text-gray-700 hover:border-gray-400 transition">
+                Borradores
+            </button>
+            <button class="px-4 py-2 bg-white border border-gray-300 rounded-lg text-gray-700 hover:border-gray-400 transition">
+                Publicadas
+            </button>
+            <button class="px-4 py-2 bg-white border border-gray-300 rounded-lg text-gray-700 hover:border-gray-400 transition">
+                Cerradas
+            </button>
+        </div>
+
+        <!-- Grid de Encuestas -->
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            @foreach (var encuesta in Model)
+            {
+                <div class="bg-white rounded-lg shadow-md hover:shadow-lg transition overflow-hidden border border-gray-200">
+                    <!-- Card Header -->
+                    <div class="p-6">
+                        <!-- Título y Estado -->
+                        <div class="flex justify-between items-start mb-4">
+                            <h3 class="text-xl font-bold text-gray-900 flex-1">@encuesta.Titulo</h3>
+                            <span class="@GetEstadoClase(encuesta.Estado) text-xs font-bold px-3 py-1 rounded-full whitespace-nowrap ml-2">
+                                @GetEstadoTexto(encuesta.Estado)
+                            </span>
+                        </div>
+
+                        <!-- Descripción -->
+                        <p class="text-gray-600 text-sm mb-4 line-clamp-2">
+                            @encuesta.Descripcion
+                        </p>
+
+                        <!-- Meta información -->
+                        <div class="space-y-2 text-sm text-gray-500 mb-4 border-t pt-4">
+                            <div class="flex justify-between">
+                                <span>Fecha de Creación:</span>
+                                <span class="font-semibold text-gray-700">@encuesta.FechaCreacion.ToString("dd/MM/yyyy")</span>
+                            </div>
+                            <div class="flex justify-between">
+                                <span>Vencimiento:</span>
+                                <span class="font-semibold text-gray-700">@encuesta.FechaVencimiento.ToString("dd/MM/yyyy")</span>
+                            </div>
+                            <div class="flex justify-between">
+                                <span>Preguntas:</span>
+                                <span class="font-semibold text-gray-700">@(encuesta.Preguntas?.Count ?? 0)</span>
+                            </div>
+                            <div class="flex justify-between">
+                                <span>Respuestas:</span>
+                                <span class="font-semibold text-gray-700">@(encuesta.Respuestas?.Count ?? 0)</span>
+                            </div>
+                        </div>
+
+                        <!-- Acciones -->
+                        <div class="flex space-x-3 pt-4">
+                            <a asp-action="Details" asp-route-id="@encuesta.Id" 
+                               class="flex-1 text-center bg-blue-100 text-blue-600 py-2 rounded-lg hover:bg-blue-200 transition font-semibold text-sm">
+                                👁️ Ver
+                            </a>
+                            <a asp-controller="EditaEncuesta" asp-action="Index" asp-route-id="@encuesta.Id"
+                               class="flex-1 text-center bg-yellow-100 text-yellow-600 py-2 rounded-lg hover:bg-yellow-200 transition font-semibold text-sm">
+                                ✏️ Editar
+                            </a>
+                            <form method="post" asp-controller="EditaEncuesta" asp-action="Delete" asp-route-id="@encuesta.Id" class="flex-1"
+                                  onsubmit="return confirm('¿Estás seguro de que deseas eliminar esta encuesta?');">
+                                <button type="submit" class="w-full bg-red-100 text-red-600 py-2 rounded-lg hover:bg-red-200 transition font-semibold text-sm">
+                                    🗑️ Eliminar
+                                </button>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+            }
+        </div>
+    }
+    else
+    {
+        <!-- Estado vacío -->
+        <div class="text-center py-16">
+            <div class="inline-block text-6xl mb-4 opacity-50">📋</div>
+            <h2 class="text-2xl font-bold text-gray-900 mb-2">No hay encuestas aún</h2>
+            <p class="text-gray-600 mb-6">Crea tu primera encuesta para comenzar a evaluar</p>
+            <a asp-action="Create" class="inline-block bg-blue-600 text-white px-8 py-3 rounded-lg hover:bg-blue-700 transition font-semibold">
+                ➕ Crear Primera Encuesta
+            </a>
+        </div>
+    }
+</div>
+
+@section Scripts {
+    <script>
+        // Lógica adicional si es necesaria
+    </script>
+}
+
+@functions {
+    private string GetEstadoClase(EncuestasEvaluacionLiderazgo.Models.EstadoEncuesta estado)
+    {
+        return estado switch
+        {
+            EncuestasEvaluacionLiderazgo.Models.EstadoEncuesta.Borrador => "bg-gray-100 text-gray-800",
+            EncuestasEvaluacionLiderazgo.Models.EstadoEncuesta.Publicada => "bg-green-100 text-green-800",
+            EncuestasEvaluacionLiderazgo.Models.EstadoEncuesta.Cerrada => "bg-orange-100 text-orange-800",
+            EncuestasEvaluacionLiderazgo.Models.EstadoEncuesta.Archivada => "bg-blue-100 text-blue-800",
+            _ => "bg-gray-100 text-gray-800"
+        };
+    }
+
+    private string GetEstadoTexto(EncuestasEvaluacionLiderazgo.Models.EstadoEncuesta estado)
+    {
+        return estado switch
+        {
+            EncuestasEvaluacionLiderazgo.Models.EstadoEncuesta.Borrador => "Borrador",
+            EncuestasEvaluacionLiderazgo.Models.EstadoEncuesta.Publicada => "Publicada",
+            EncuestasEvaluacionLiderazgo.Models.EstadoEncuesta.Cerrada => "Cerrada",
+            EncuestasEvaluacionLiderazgo.Models.EstadoEncuesta.Archivada => "Archivada",
+            _ => "Desconocido"
+        };
+    }
+}

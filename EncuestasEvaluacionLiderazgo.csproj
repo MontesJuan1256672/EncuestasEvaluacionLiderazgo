@@ -1,0 +1,22 @@
+<Project Sdk="Microsoft.NET.Sdk.Web">
+
+  <PropertyGroup>
+    <TargetFramework>net9.0</TargetFramework>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+  </PropertyGroup>
+
+  <!-- Referencias a DLLs externas -->
+  <ItemGroup>
+    <Reference Include="CentrexEncrypt">
+      <HintPath>References\CentrexEncrypt.dll</HintPath>
+    </Reference>
+    <Reference Include="ConnStringsTelvista">
+      <HintPath>References\ConnStringsTelvista.dll</HintPath>
+    </Reference>
+    <Reference Include="SqlHelper">
+      <HintPath>References\SqlHelper.dll</HintPath>
+    </Reference>
+  </ItemGroup>
+
+</Project>

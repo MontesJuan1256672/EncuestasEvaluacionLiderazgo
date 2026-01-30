@@ -1,0 +1,376 @@
+// EJEMPLO: Cómo sería la implementación futura con Entity Framework Core y mejores prácticas
+
+/*
+ * PASO 1: INSTALAR PAQUETES NUGET
+ * ===============================
+ * 
+ * dotnet add package Microsoft.EntityFrameworkCore
+ * dotnet add package Microsoft.EntityFrameworkCore.SqlServer
+ * dotnet add package Microsoft.EntityFrameworkCore.Tools
+ * dotnet add package Microsoft.AspNetCore.Identity.EntityFrameworkCore
+ * dotnet add package Microsoft.AspNetCore.Identity.UI
+ * dotnet add package AutoMapper.Extensions.Microsoft.DependencyInjection
+ * dotnet add package FluentValidation.DependencyInjectionExtensions
+ */
+
+// PASO 2: CREAR EL DbContext (Data/AppDbContext.cs)
+using Microsoft.EntityFrameworkCore;
+using EncuestasEvaluacionLiderazgo.Models;
+
+namespace EncuestasEvaluacionLiderazgo.Data
+{
+    public class AppDbContext : DbContext
+    {
+        public AppDbContext(DbContextOptions<AppDbContext> options)
+            : base(options)
+        {
+        }
+
+        public DbSet<Usuario> Usuarios { get; set; }
+        public DbSet<Encuesta> Encuestas { get; set; }
+        public DbSet<Pregunta> Preguntas { get; set; }
+        public DbSet<OpcionRespuesta> OpcionesRespuesta { get; set; }
+        public DbSet<Respuesta> Respuestas { get; set; }
+        public DbSet<RespuestaDetalle> DetallesRespuesta { get; set; }
+
+        protected override void OnModelCreating(ModelBuilder modelBuilder)
+        {
+            base.OnModelCreating(modelBuilder);
+
+            // Configurar relaciones
+            modelBuilder.Entity<Encuesta>()
+                .HasOne(e => e.UsuarioCreador)
+                .WithMany(u => u.EncuestasCreadas)
+                .HasForeignKey(e => e.UsuarioCreadorId);
+
+            modelBuilder.Entity<Respuesta>()
+                .HasOne(r => r.Encuesta)
+                .WithMany(e => e.Respuestas)
+                .HasForeignKey(r => r.EncuestaId);
+
+            // Seed de datos iniciales
+            modelBuilder.Entity<Usuario>().HasData(
+                new Usuario
+                {
+                    Id = 1,
+                    Nombre = "Admin",
+                    Email = "admin@test.com",
+                    Contraseña = "hashed_password_here", // Usar bcrypt en realidad
+                    TipoUsuario = TipoUsuario.Administrador,
+                    Activo = true,
+                    FechaCreacion = DateTime.Now
+                }
+            );
+        }
+    }
+}
+
+// PASO 3: ACTUALIZAR Program.cs
+// ============================
+
+using EncuestasEvaluacionLiderazgo.Data;
+using Microsoft.EntityFrameworkCore;
+using AutoMapper;
+
+var builder = WebApplication.CreateBuilder(args);
+
+// Agregar DbContext
+builder.Services.AddDbContext<AppDbContext>(options =>
+    options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection"))
+);
+
+// Agregar AutoMapper
+builder.Services.AddAutoMapper(typeof(Program));
+
+// Servicios
+builder.Services.AddScoped<IAuthService, AuthService>();
+builder.Services.AddScoped<IEncuestaService, EncuestaService>();
+builder.Services.AddScoped<IRespuestaService, RespuestaService>();
+
+// Sesión
+builder.Services.AddSession(options =>
+{
+    options.IdleTimeout = TimeSpan.FromMinutes(30);
+    options.Cookie.HttpOnly = true;
+});
+
+// Controllers y views
+builder.Services.AddControllersWithViews();
+
+// ... resto de configuración
+
+// PASO 4: CREAR MIGRATION
+// ======================
+// dotnet ef migrations add InitialCreate
+// dotnet ef database update
+
+// PASO 5: ACTUALIZAR AuthService CON EF CORE
+// ===========================================
+
+public class AuthService : IAuthService
+{
+    private readonly AppDbContext _context;
+    private readonly IPasswordHasher<Usuario> _passwordHasher;
+    private readonly ILogger<AuthService> _logger;
+
+    public AuthService(AppDbContext context, IPasswordHasher<Usuario> passwordHasher, ILogger<AuthService> logger)
+    {
+        _context = context;
+        _passwordHasher = passwordHasher;
+        _logger = logger;
+    }
+
+    public async Task<(bool Success, string Message, Usuario Usuario)> LoginAsync(string email, string contraseña)
+    {
+        try
+        {
+            var usuario = await _context.Usuarios
+                .FirstOrDefaultAsync(u => u.Email.ToLower() == email.ToLower() && u.Activo);
+
+            if (usuario == null)
+            {
+                _logger.LogWarning("Login fallido: usuario no encontrado. Email: {Email}", email);
+                return (false, "Email o contraseña incorrectos", null);
+            }
+
+            var resultado = _passwordHasher.VerifyHashedPassword(usuario, usuario.Contraseña);
+            if (resultado == PasswordVerificationResult.Failed)
+            {
+                _logger.LogWarning("Login fallido: contraseña incorrecta. Email: {Email}", email);
+                return (false, "Email o contraseña incorrectos", null);
+            }
+
+            usuario.FechaUltimoAcceso = DateTime.Now;
+            await _context.SaveChangesAsync();
+
+            _logger.LogInformation("Login exitoso para usuario: {UserId}", usuario.Id);
+            return (true, "Login exitoso", usuario);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error en LoginAsync");
+            return (false, "Ocurrió un error en el servidor", null);
+        }
+    }
+
+    public async Task<(bool Success, string Message)> RegisterAsync(
+        string nombre, string email, string contraseña, TipoUsuario tipoUsuario)
+    {
+        try
+        {
+            // Validar
+            if (string.IsNullOrWhiteSpace(nombre) || nombre.Length < 3)
+                return (false, "El nombre debe tener al menos 3 caracteres");
+
+            if (!IsValidEmail(email))
+                return (false, "Email inválido");
+
+            if (contraseña.Length < 8)
+                return (false, "La contraseña debe tener al menos 8 caracteres");
+
+            // Verificar email único
+            if (await _context.Usuarios.AnyAsync(u => u.Email.ToLower() == email.ToLower()))
+                return (false, "Este email ya está registrado");
+
+            // Crear usuario
+            var usuario = new Usuario
+            {
+                Nombre = nombre,
+                Email = email,
+                TipoUsuario = tipoUsuario,
+                Activo = true,
+                FechaCreacion = DateTime.Now
+            };
+
+            usuario.Contraseña = _passwordHasher.HashPassword(usuario, contraseña);
+
+            _context.Usuarios.Add(usuario);
+            await _context.SaveChangesAsync();
+
+            _logger.LogInformation("Nuevo usuario registrado: {UserId}", usuario.Id);
+            return (true, "Registro exitoso");
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error en RegisterAsync");
+            return (false, "Ocurrió un error al registrar el usuario");
+        }
+    }
+
+    private bool IsValidEmail(string email)
+    {
+        try
+        {
+            var addr = new System.Net.Mail.MailAddress(email);
+            return addr.Address == email;
+        }
+        catch
+        {
+            return false;
+        }
+    }
+}
+
+// PASO 6: CREAR VALIDATORS CON FLUENT VALIDATION
+// ===============================================
+
+using FluentValidation;
+
+public class LoginViewModelValidator : AbstractValidator<LoginViewModel>
+{
+    public LoginViewModelValidator()
+    {
+        RuleFor(x => x.Email)
+            .NotEmpty().WithMessage("El email es requerido")
+            .EmailAddress().WithMessage("El email es inválido");
+
+        RuleFor(x => x.Contraseña)
+            .NotEmpty().WithMessage("La contraseña es requerida")
+            .MinimumLength(6).WithMessage("La contraseña debe tener al menos 6 caracteres");
+    }
+}
+
+// PASO 7: CREAR PROFILES DE AUTOMAPPER
+// ====================================
+
+public class MappingProfile : Profile
+{
+    public MappingProfile()
+    {
+        // Usuario
+        CreateMap<Usuario, UsuarioDto>().ReverseMap();
+        CreateMap<Usuario, CreateUsuarioDto>().ReverseMap();
+
+        // Encuesta
+        CreateMap<Encuesta, EncuestaDto>()
+            .ForMember(dest => dest.Preguntas, opt => opt.MapFrom(src => src.Preguntas))
+            .ReverseMap();
+
+        CreateMap<Encuesta, CreateEncuestaDto>().ReverseMap();
+    }
+}
+
+// PASO 8: CREAR DTOs
+// =================
+
+public class UsuarioDto
+{
+    public int Id { get; set; }
+    public string Nombre { get; set; }
+    public string Email { get; set; }
+    public TipoUsuario TipoUsuario { get; set; }
+}
+
+public class CreateUsuarioDto
+{
+    public string Nombre { get; set; }
+    public string Email { get; set; }
+    public string Contraseña { get; set; }
+    public TipoUsuario TipoUsuario { get; set; }
+}
+
+// PASO 9: IMPLEMENTAR REPOSITORIO PATTERN (OPCIONAL)
+// ==================================================
+
+public interface IEncuestaRepository
+{
+    Task<Encuesta> GetByIdAsync(int id);
+    Task<IEnumerable<Encuesta>> GetAllAsync();
+    Task<IEnumerable<Encuesta>> GetByUsuarioAsync(int usuarioId);
+    Task<int> CreateAsync(Encuesta encuesta);
+    Task UpdateAsync(Encuesta encuesta);
+    Task DeleteAsync(int id);
+}
+
+public class EncuestaRepository : IEncuestaRepository
+{
+    private readonly AppDbContext _context;
+
+    public EncuestaRepository(AppDbContext context)
+    {
+        _context = context;
+    }
+
+    public async Task<Encuesta> GetByIdAsync(int id)
+    {
+        return await _context.Encuestas
+            .Include(e => e.Preguntas)
+            .Include(e => e.Respuestas)
+            .FirstOrDefaultAsync(e => e.Id == id);
+    }
+
+    public async Task<IEnumerable<Encuesta>> GetAllAsync()
+    {
+        return await _context.Encuestas
+            .Include(e => e.Preguntas)
+            .ToListAsync();
+    }
+
+    public async Task<IEnumerable<Encuesta>> GetByUsuarioAsync(int usuarioId)
+    {
+        return await _context.Encuestas
+            .Where(e => e.UsuarioCreadorId == usuarioId)
+            .Include(e => e.Preguntas)
+            .ToListAsync();
+    }
+
+    public async Task<int> CreateAsync(Encuesta encuesta)
+    {
+        _context.Encuestas.Add(encuesta);
+        await _context.SaveChangesAsync();
+        return encuesta.Id;
+    }
+
+    public async Task UpdateAsync(Encuesta encuesta)
+    {
+        _context.Encuestas.Update(encuesta);
+        await _context.SaveChangesAsync();
+    }
+
+    public async Task DeleteAsync(int id)
+    {
+        var encuesta = await GetByIdAsync(id);
+        if (encuesta != null)
+        {
+            _context.Encuestas.Remove(encuesta);
+            await _context.SaveChangesAsync();
+        }
+    }
+}
+
+// PASO 10: ACTUALIZAR appsettings.json
+// ====================================
+
+{
+  "ConnectionStrings": {
+    "DefaultConnection": "Server=(local);Database=EncuestasLiderazgo;Trusted_Connection=true;TrustServerCertificate=true;"
+  },
+  "Logging": {
+    "LogLevel": {
+      "Default": "Information",
+      "Microsoft.EntityFrameworkCore.Database.Command": "Information"
+    }
+  },
+  "AllowedHosts": "*",
+  "SessionTimeout": 30
+}
+
+/*
+ * NOTAS IMPORTANTES:
+ * 
+ * 1. Este es un ejemplo de cómo mejorar el proyecto actual
+ * 2. Está diseñado para ser implementado de forma incremental
+ * 3. Primero implementar la BD, luego los validadores, luego AutoMapper
+ * 4. Mantener los tests mientras se refactoriza
+ * 5. Hacer commits pequeños y frecuentes
+ * 
+ * ORDEN RECOMENDADO DE IMPLEMENTACIÓN:
+ * 1. DbContext y migrations (sin cambiar lógica)
+ * 2. Reemplazar servicios para usar EF Core
+ * 3. Hashing de contraseñas
+ * 4. Validators
+ * 5. AutoMapper
+ * 6. Repositorio pattern (opcional)
+ * 7. Logging
+ * 8. Tests
+ */

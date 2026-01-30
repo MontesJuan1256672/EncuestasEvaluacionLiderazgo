@@ -1,0 +1,436 @@
+using EncuestasEvaluacionLiderazgo.Models;
+using EncuestasEvaluacionLiderazgo.Services;
+using Microsoft.AspNetCore.Mvc;
+using System.Threading.Tasks;
+
+namespace EncuestasEvaluacionLiderazgo.Ejemplos
+{
+    /*
+     * EJEMPLOS DE USO DE LOS SERVICIOS
+     * ================================
+     * 
+     * Este archivo muestra cómo usar los servicios en controladores
+     * y otras partes de la aplicación.
+     */
+
+    // EJEMPLO 1: Usar AuthService para login
+    // ======================================
+    public class AuthLoginEjemplo
+    {
+        private readonly IAuthService _authService;
+
+        public AuthLoginEjemplo(IAuthService authService)
+        {
+            _authService = authService;
+        }
+
+        public async Task<IActionResult> LoginEjemplo()
+        {
+            // Llamar al servicio
+            var (success, message, usuario) = await _authService.LoginAsync(
+                "admin@test.com",
+                "Admin@123"
+            );
+
+            if (success)
+            {
+                // Login exitoso
+                // HttpContext.Session.SetInt32("UserId", usuario.Id);
+                // HttpContext.Session.SetString("UserName", usuario.Nombre);
+                return new OkObjectResult(new { usuario.Nombre, usuario.TipoUsuario });
+            }
+            else
+            {
+                // Error de autenticación
+                return new BadRequestObjectResult(new { error = message });
+            }
+        }
+    }
+
+    // EJEMPLO 2: Usar AuthService para registro
+    // =========================================
+    public class AuthRegisterEjemplo
+    {
+        private readonly IAuthService _authService;
+
+        public AuthRegisterEjemplo(IAuthService authService)
+        {
+            _authService = authService;
+        }
+
+        public async Task<IActionResult> RegisterEjemplo()
+        {
+            var (success, message) = await _authService.RegisterAsync(
+                nombre: "Juan Pérez",
+                email: "juan@example.com",
+                contraseña: "MiContraseña@123",
+                tipoUsuario: TipoUsuario.Evaluador
+            );
+
+            if (success)
+            {
+                return new OkObjectResult(new { message });
+            }
+            else
+            {
+                return new BadRequestObjectResult(new { error = message });
+            }
+        }
+    }
+
+    // EJEMPLO 3: Usar EncuestaService para crear encuesta
+    // ==================================================
+    public class EncuestaCreateEjemplo
+    {
+        private readonly IEncuestaService _encuestaService;
+
+        public EncuestaCreateEjemplo(IEncuestaService encuestaService)
+        {
+            _encuestaService = encuestaService;
+        }
+
+        public async Task<IActionResult> CreateEjemplo()
+        {
+            var encuesta = new Encuesta
+            {
+                Titulo = "Evaluación de Liderazgo Q1 2026",
+                Descripcion = "Evaluación de competencias de liderazgo para el primer trimestre",
+                FechaVencimiento = System.DateTime.Now.AddDays(30),
+                UsuarioCreadorId = 1 // El usuario autenticado
+            };
+
+            var (success, message, encuestaId) = await _encuestaService.CreateEncuestaAsync(encuesta);
+
+            if (success)
+            {
+                // Encuesta creada exitosamente
+                return new OkObjectResult(new 
+                { 
+                    message,
+                    encuestaId,
+                    estado = "Borrador"
+                });
+            }
+            else
+            {
+                return new BadRequestObjectResult(new { error = message });
+            }
+        }
+    }
+
+    // EJEMPLO 4: Usar EncuestaService para obtener encuesta
+    // ====================================================
+    public class EncuestaGetEjemplo
+    {
+        private readonly IEncuestaService _encuestaService;
+
+        public EncuestaGetEjemplo(IEncuestaService encuestaService)
+        {
+            _encuestaService = encuestaService;
+        }
+
+        public async Task<IActionResult> GetEjemplo()
+        {
+            int encuestaId = 1;
+            var encuesta = await _encuestaService.GetEncuestaByIdAsync(encuestaId);
+
+            if (encuesta == null)
+            {
+                return new NotFoundObjectResult(new { error = "Encuesta no encontrada" });
+            }
+
+            // Encuesta encontrada
+            return new OkObjectResult(new
+            {
+                encuesta.Id,
+                encuesta.Titulo,
+                encuesta.Descripcion,
+                encuesta.Estado,
+                preguntasCount = encuesta.Preguntas?.Count ?? 0,
+                respuestasCount = encuesta.Respuestas?.Count ?? 0
+            });
+        }
+    }
+
+    // EJEMPLO 5: Usar EncuestaService para actualizar encuesta
+    // ========================================================
+    public class EncuestaUpdateEjemplo
+    {
+        private readonly IEncuestaService _encuestaService;
+
+        public EncuestaUpdateEjemplo(IEncuestaService encuestaService)
+        {
+            _encuestaService = encuestaService;
+        }
+
+        public async Task<IActionResult> UpdateEjemplo()
+        {
+            var encuesta = new Encuesta
+            {
+                Id = 1,
+                Titulo = "Evaluación Actualizada",
+                Descripcion = "Nueva descripción",
+                FechaVencimiento = System.DateTime.Now.AddDays(45)
+            };
+
+            var (success, message) = await _encuestaService.UpdateEncuestaAsync(encuesta);
+
+            if (success)
+            {
+                return new OkObjectResult(new { message });
+            }
+            else
+            {
+                return new BadRequestObjectResult(new { error = message });
+            }
+        }
+    }
+
+    // EJEMPLO 6: Usar EncuestaService para publicar
+    // ============================================
+    public class EncuestaPublishEjemplo
+    {
+        private readonly IEncuestaService _encuestaService;
+
+        public EncuestaPublishEjemplo(IEncuestaService encuestaService)
+        {
+            _encuestaService = encuestaService;
+        }
+
+        public async Task<IActionResult> PublishEjemplo()
+        {
+            int encuestaId = 1;
+            var (success, message) = await _encuestaService.PublishEncuestaAsync(encuestaId);
+
+            if (success)
+            {
+                // Encuesta publicada
+                return new OkObjectResult(new { message, estado = "Publicada" });
+            }
+            else
+            {
+                // Error: Probablemente sin preguntas
+                return new BadRequestObjectResult(new { error = message });
+            }
+        }
+    }
+
+    // EJEMPLO 7: Usar RespuestaService para guardar respuesta
+    // ======================================================
+    public class RespuestaGuardarEjemplo
+    {
+        private readonly IRespuestaService _respuestaService;
+
+        public RespuestaGuardarEjemplo(IRespuestaService respuestaService)
+        {
+            _respuestaService = respuestaService;
+        }
+
+        public async Task<IActionResult> SaveEjemplo()
+        {
+            var respuesta = new Respuesta
+            {
+                EncuestaId = 1,
+                UsuarioId = 2, // Evaluador respondiendo
+                Completada = true,
+                Detalles = new System.Collections.Generic.List<RespuestaDetalle>
+                {
+                    new RespuestaDetalle
+                    {
+                        PreguntaId = 1,
+                        Valor = "5" // Respuesta a la pregunta 1
+                    },
+                    new RespuestaDetalle
+                    {
+                        PreguntaId = 2,
+                        Valor = "Excelente liderazgo" // Respuesta a la pregunta 2
+                    }
+                }
+            };
+
+            var (success, message) = await _respuestaService.SaveRespuestaAsync(respuesta);
+
+            if (success)
+            {
+                return new OkObjectResult(new { message, respuestaId = respuesta.Id });
+            }
+            else
+            {
+                return new BadRequestObjectResult(new { error = message });
+            }
+        }
+    }
+
+    // EJEMPLO 8: En un Controller - Flujo completo
+    // ============================================
+    public class FlujCompletoEjemplo : ControllerBase
+    {
+        private readonly IAuthService _authService;
+        private readonly IEncuestaService _encuestaService;
+        private readonly IRespuestaService _respuestaService;
+
+        public FlujCompletoEjemplo(
+            IAuthService authService,
+            IEncuestaService encuestaService,
+            IRespuestaService respuestaService)
+        {
+            _authService = authService;
+            _encuestaService = encuestaService;
+            _respuestaService = respuestaService;
+        }
+
+        public async Task<IActionResult> FlujCompletoAsync()
+        {
+            // PASO 1: Admin se autentica
+            var (loginOk, loginMsg, admin) = await _authService.LoginAsync("admin@test.com", "Admin@123");
+            if (!loginOk) return BadRequest("Login fallido");
+
+            // PASO 2: Admin crea encuesta
+            var encuestaNueva = new Encuesta
+            {
+                Titulo = "Evaluación Q1 2026",
+                Descripcion = "Evaluación completa de competencias de liderazgo",
+                FechaVencimiento = System.DateTime.Now.AddDays(30),
+                UsuarioCreadorId = admin.Id
+            };
+            var (createOk, createMsg, encuestaId) = await _encuestaService.CreateEncuestaAsync(encuestaNueva);
+            if (!createOk) return BadRequest("Crear encuesta fallido");
+
+            // PASO 3: Admin publica encuesta
+            var (publishOk, publishMsg) = await _encuestaService.PublishEncuestaAsync(encuestaId);
+            if (!publishOk) return BadRequest("Publicar fallido - necesita preguntas");
+
+            // PASO 4: Evaluador obtiene la encuesta
+            var encuesta = await _encuestaService.GetEncuestaByIdAsync(encuestaId);
+            if (encuesta.Estado != EstadoEncuesta.Publicada)
+                return BadRequest("Encuesta no está publicada");
+
+            // PASO 5: Evaluador responde
+            var respuesta = new Respuesta
+            {
+                EncuestaId = encuestaId,
+                UsuarioId = 2, // Evaluador
+                Completada = true
+            };
+            var (respOk, respMsg) = await _respuestaService.SaveRespuestaAsync(respuesta);
+            if (!respOk) return BadRequest("Guardar respuesta fallido");
+
+            // PASO 6: Admin ve resultados
+            var encuestaPubicada = await _encuestaService.GetEncuestaByIdAsync(encuestaId);
+            var totalRespuestas = encuestaPubicada.Respuestas?.Count ?? 0;
+
+            return Ok(new
+            {
+                mensaje = "Flujo completo exitoso",
+                encuestaId,
+                admin = admin.Nombre,
+                totalRespuestas
+            });
+        }
+    }
+
+    // EJEMPLO 9: Manejo de errores recomendado
+    // ======================================
+    public class ManejoErroresEjemplo
+    {
+        private readonly IEncuestaService _encuestaService;
+
+        public ManejoErroresEjemplo(IEncuestaService encuestaService)
+        {
+            _encuestaService = encuestaService;
+        }
+
+        public async Task<IActionResult> DeleteEjemploAsync(int id)
+        {
+            try
+            {
+                // Verificar que existe
+                var encuesta = await _encuestaService.GetEncuestaByIdAsync(id);
+                if (encuesta == null)
+                {
+                    return new NotFoundObjectResult(new { error = "Encuesta no encontrada" });
+                }
+
+                // Verificar permisos (en el controlador real)
+                // if (encuesta.UsuarioCreadorId != userId) return Forbid();
+
+                // Intentar eliminar
+                var (success, message) = await _encuestaService.DeleteEncuestaAsync(id);
+
+                if (success)
+                {
+                    return new OkObjectResult(new { message });
+                }
+                else
+                {
+                    // Error específico del servicio
+                    return new BadRequestObjectResult(new { error = message });
+                }
+            }
+            catch (System.Exception ex)
+            {
+                // Error no esperado
+                return new ObjectResult(new { error = "Ocurrió un error inesperado" })
+                {
+                    StatusCode = 500
+                };
+            }
+        }
+    }
+
+    // EJEMPLO 10: Validar disponibilidad de encuesta
+    // =============================================
+    public class ValidarDisponibilidadEjemplo
+    {
+        private readonly IEncuestaService _encuestaService;
+
+        public ValidarDisponibilidadEjemplo(IEncuestaService encuestaService)
+        {
+            _encuestaService = encuestaService;
+        }
+
+        public async Task<bool> PuedeResponderEncuestaAsync(int encuestaId)
+        {
+            var encuesta = await _encuestaService.GetEncuestaByIdAsync(encuestaId);
+
+            if (encuesta == null)
+                return false;
+
+            if (encuesta.Estado != EstadoEncuesta.Publicada)
+                return false;
+
+            if (System.DateTime.Now > encuesta.FechaVencimiento)
+                return false;
+
+            if (!encuesta.Activa)
+                return false;
+
+            return true;
+        }
+    }
+
+    /*
+     * PATRONES DE USO
+     * ===============
+     * 
+     * 1. VERIFICAR RESULTADO ANTES DE USAR
+     *    var (success, message, usuario) = await service.LoginAsync(...);
+     *    if (!success) { mostrar error }
+     * 
+     * 2. SIEMPRE VALIDAR NULL
+     *    var encuesta = await service.GetEncuestaByIdAsync(id);
+     *    if (encuesta == null) { retornar 404 }
+     * 
+     * 3. CONTROLAR EXCEPCIONES EN NIVEL SUPERIOR
+     *    try { ... } catch (Exception ex) { logging y manejo }
+     * 
+     * 4. AUTORIZACIÓN ANTES DE OPERACIONES
+     *    if (encuesta.UsuarioCreadorId != usuarioActual.Id) { Forbid() }
+     * 
+     * 5. USAR ASYNC/AWAIT CORRECTAMENTE
+     *    await service.MethodAsync(); // No usar .Result o .Wait()
+     * 
+     * 6. RETORNAR RESULTADOS CONSISTENTES
+     *    Siempre retornar (success, message) con tuples
+     */
+}
