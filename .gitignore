@@ -1,0 +1,25 @@
+# Visual Studio
+.vs/
+.vscode/
+*.suo
+*.user
+*.userprefs
+*.sln.docstates
+
+# Build results
+bin/
+obj/
+Debug/
+Release/
+
+# NuGet
+packages/
+*.nupkg
+.nuget/
+
+# User-specific files
+appsettings.Development.json
+
+# OS
+.DS_Store
+Thumbs.db

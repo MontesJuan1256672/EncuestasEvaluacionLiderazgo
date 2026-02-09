@@ -18,5 +18,8 @@
       <HintPath>References\SqlHelper.dll</HintPath>
     </Reference>
   </ItemGroup>
+  <ItemGroup>
+    <PackageReference Include="Microsoft.Data.SqlClient" Version="6.1.4" />
+  </ItemGroup>
 
 </Project>

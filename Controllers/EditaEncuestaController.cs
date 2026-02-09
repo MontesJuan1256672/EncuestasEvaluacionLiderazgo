@@ -37,14 +37,34 @@ namespace EncuestasEvaluacionLiderazgo.Controllers
         }
 
         /// <summary>
+        /// Obtiene el tipo de usuario actual desde la sesión
+        /// </summary>
+        private int GetCurrentUserType()
+        {
+            return HttpContext.Session.GetInt32("UserType") ?? 0;
+        }
+
+        /// <summary>
+        /// Verifica si el usuario actual es administrador
+        /// </summary>
+        private bool IsAdmin()
+        {
+            return GetCurrentUserType() == (int)TipoUsuario.Administrador;
+        }
+
+        /// <summary>
         /// GET: /EditaEncuesta/{id}
         /// Muestra el formulario para editar una encuesta existente
+        /// Solo administradores pueden editar encuestas
         /// </summary>
         [HttpGet("{id}")]
         public async Task<IActionResult> Index(int id)
         {
             if (!IsAuthenticated())
                 return RedirectToAction("Login", "Auth");
+
+            if (!IsAdmin())
+                return Forbid();
 
             var encuesta = await _encuestaService.GetEncuestaByIdAsync(id);
 
@@ -61,6 +81,7 @@ namespace EncuestasEvaluacionLiderazgo.Controllers
         /// <summary>
         /// POST: /EditaEncuesta/Update
         /// Actualiza una encuesta existente
+        /// Solo administradores pueden editar encuestas
         /// </summary>
         [HttpPost("Update")]
         [ValidateAntiForgeryToken]
@@ -68,6 +89,9 @@ namespace EncuestasEvaluacionLiderazgo.Controllers
         {
             if (!IsAuthenticated())
                 return RedirectToAction("Login", "Auth");
+
+            if (!IsAdmin())
+                return Forbid();
 
             if (!ModelState.IsValid)
                 return View("Index", encuesta);
@@ -91,7 +115,8 @@ namespace EncuestasEvaluacionLiderazgo.Controllers
 
         /// <summary>
         /// POST: /EditaEncuesta/Publish
-        /// Publica una encuesta (la hace visible para responder)
+        /// Publica una encuesta
+        /// Solo administradores pueden publicar encuestas
         /// </summary>
         [HttpPost("Publish")]
         [ValidateAntiForgeryToken]
@@ -99,6 +124,9 @@ namespace EncuestasEvaluacionLiderazgo.Controllers
         {
             if (!IsAuthenticated())
                 return RedirectToAction("Login", "Auth");
+
+            if (!IsAdmin())
+                return Forbid();
 
             var encuesta = await _encuestaService.GetEncuestaByIdAsync(id);
             if (encuesta == null)
@@ -122,6 +150,7 @@ namespace EncuestasEvaluacionLiderazgo.Controllers
         /// <summary>
         /// POST: /EditaEncuesta/Delete
         /// Elimina una encuesta
+        /// Solo administradores pueden eliminar encuestas
         /// </summary>
         [HttpPost("Delete")]
         [ValidateAntiForgeryToken]
@@ -129,6 +158,9 @@ namespace EncuestasEvaluacionLiderazgo.Controllers
         {
             if (!IsAuthenticated())
                 return RedirectToAction("Login", "Auth");
+
+            if (!IsAdmin())
+                return Forbid();
 
             var encuesta = await _encuestaService.GetEncuestaByIdAsync(id);
             if (encuesta == null)

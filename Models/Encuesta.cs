@@ -15,6 +15,7 @@ namespace EncuestasEvaluacionLiderazgo.Models
         public DateTime FechaVencimiento { get; set; }
         public EstadoEncuesta Estado { get; set; } = EstadoEncuesta.Borrador;
         public int UsuarioCreadorId { get; set; }
+        public int IdTipoEvaluacion { get; set; }
         public bool Activa { get; set; } = true;
 
         // Relaciones

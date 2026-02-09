@@ -1,7 +1,9 @@
 @model EncuestasEvaluacionLiderazgo.Models.Encuesta
+@using EncuestasEvaluacionLiderazgo.Views.Encuesta
 
 @{
     ViewData["Title"] = @Model.Titulo;
+    var detailsModel = new DetailsModel();
 }
 
 <div class="max-w-4xl mx-auto py-8">
@@ -12,8 +14,8 @@
                 <h1 class="text-4xl font-bold text-gray-900 mb-2">@Model.Titulo</h1>
                 <p class="text-gray-600 text-lg">@Model.Descripcion</p>
             </div>
-            <span class="@GetEstadoClase(Model.Estado) text-sm font-bold px-4 py-2 rounded-full">
-                @GetEstadoTexto(Model.Estado)
+            <span class="@detailsModel.GetEstadoClase(Model.Estado) text-sm font-bold px-4 py-2 rounded-full">
+                @detailsModel.GetEstadoTexto(Model.Estado)
             </span>
         </div>
 
@@ -62,7 +64,7 @@
                                                 <span class="text-red-600 ml-1">*</span>
                                             }
                                         </h3>
-                                        <p class="text-gray-500 text-sm mt-1">@GetTipoPreguntaTexto(pregunta.Tipo)</p>
+                                        <p class="text-gray-500 text-sm mt-1">@detailsModel.GetTipoPreguntaTexto(pregunta.Tipo)</p>
                                     </div>
                                 </div>
                             </div>
@@ -127,7 +129,7 @@
                                                            class="h-4 w-4 text-blue-600"
                                                            @(pregunta.Requerida ? "required" : "") />
                                                     <span class="mt-2 text-2xl group-hover:scale-125 transition-transform">
-                                                        @GetEstrella(i)
+                                                        @detailsModel.GetEstrella(i)
                                                     </span>
                                                     <span class="text-xs text-gray-600 mt-1">@i</span>
                                                 </label>
@@ -152,8 +154,8 @@
                 <button type="submit" class="flex-1 bg-green-600 text-white py-3 rounded-lg hover:bg-green-700 transition font-bold text-lg">
                     ✓ Enviar Encuesta
                 </button>
-                <a href="javascript:history.back()" class="flex-1 bg-gray-300 text-gray-800 py-3 rounded-lg hover:bg-gray-400 transition font-bold text-lg text-center">
-                    ← Cancelar
+                <a asp-action="Index" class="flex-1 bg-gray-300 text-gray-800 py-3 rounded-lg hover:bg-gray-400 transition font-bold text-lg text-center">
+                    ← Volver
                 </a>
             </div>
         </form>
@@ -163,7 +165,7 @@
         <!-- Encuesta no disponible -->
         <div class="bg-yellow-100 border-l-4 border-yellow-600 text-yellow-800 p-6 rounded-lg">
             <p class="font-bold text-lg">⚠️ Encuesta no disponible</p>
-            <p class="mt-2">Esta encuesta se encuentra en estado: <strong>@GetEstadoTexto(Model.Estado)</strong></p>
+            <p class="mt-2">Esta encuesta se encuentra en estado: <strong>@detailsModel.GetEstadoTexto(Model.Estado)</strong></p>
             <p class="mt-2">Por favor contacta al administrador si crees que esto es un error.</p>
         </div>
     }
@@ -173,56 +175,4 @@
     <script>
         // Validaciones adicionales si es necesario
     </script>
-}
-
-@functions {
-    private string GetEstadoClase(EncuestasEvaluacionLiderazgo.Models.EstadoEncuesta estado)
-    {
-        return estado switch
-        {
-            EncuestasEvaluacionLiderazgo.Models.EstadoEncuesta.Borrador => "bg-gray-100 text-gray-800",
-            EncuestasEvaluacionLiderazgo.Models.EstadoEncuesta.Publicada => "bg-green-100 text-green-800",
-            EncuestasEvaluacionLiderazgo.Models.EstadoEncuesta.Cerrada => "bg-orange-100 text-orange-800",
-            EncuestasEvaluacionLiderazgo.Models.EstadoEncuesta.Archivada => "bg-blue-100 text-blue-800",
-            _ => "bg-gray-100 text-gray-800"
-        };
-    }
-
-    private string GetEstadoTexto(EncuestasEvaluacionLiderazgo.Models.EstadoEncuesta estado)
-    {
-        return estado switch
-        {
-            EncuestasEvaluacionLiderazgo.Models.EstadoEncuesta.Borrador => "Borrador",
-            EncuestasEvaluacionLiderazgo.Models.EstadoEncuesta.Publicada => "Publicada",
-            EncuestasEvaluacionLiderazgo.Models.EstadoEncuesta.Cerrada => "Cerrada",
-            EncuestasEvaluacionLiderazgo.Models.EstadoEncuesta.Archivada => "Archivada",
-            _ => "Desconocido"
-        };
-    }
-
-    private string GetTipoPreguntaTexto(EncuestasEvaluacionLiderazgo.Models.TipoPregunta tipo)
-    {
-        return tipo switch
-        {
-            EncuestasEvaluacionLiderazgo.Models.TipoPregunta.TextoCorto => "Texto corto",
-            EncuestasEvaluacionLiderazgo.Models.TipoPregunta.TextoLargo => "Párrafo",
-            EncuestasEvaluacionLiderazgo.Models.TipoPregunta.OpcionUnica => "Opción única",
-            EncuestasEvaluacionLiderazgo.Models.TipoPregunta.OpcionMultiple => "Opciones múltiples",
-            EncuestasEvaluacionLiderazgo.Models.TipoPregunta.Escala => "Escala",
-            _ => "Desconocido"
-        };
-    }
-
-    private string GetEstrella(int valor)
-    {
-        return valor switch
-        {
-            1 => "⭐",
-            2 => "⭐⭐",
-            3 => "⭐⭐⭐",
-            4 => "⭐⭐⭐⭐",
-            5 => "⭐⭐⭐⭐⭐",
-            _ => ""
-        };
-    }
 }
