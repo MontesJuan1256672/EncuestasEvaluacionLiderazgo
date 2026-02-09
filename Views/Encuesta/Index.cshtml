@@ -1,13 +1,8 @@
 @model EncuestasEvaluacionLiderazgo.Models.EncuestaIndexViewModel
-@using System.Data
-@using EncuestasEvaluacionLiderazgo.Data
 @using EncuestasEvaluacionLiderazgo.Views.Encuesta
-@using Microsoft.AspNetCore.Http
-@inject IHttpContextAccessor HttpContextAccessor
 
 @{
     ViewData["Title"] = "Mis Encuestas";
-    var indexModel = new IndexModel(HttpContextAccessor);
 }
 
 <div class="py-8">
@@ -17,7 +12,7 @@
             <h1 class="text-4xl font-bold text-gray-900">Mis Encuestas</h1>
             <p class="text-gray-600 mt-2">Gestiona tus encuestas de evaluación de liderazgo</p>
         </div>
-        @if (indexModel.IsAdmin())
+        @if (Model?.IsAdmin ?? false)
         {
             <a asp-action="Create" class="bg-blue-600 text-white px-6 py-3 rounded-lg hover:bg-blue-700 transition inline-flex items-center space-x-2">
                 <span>➕</span>
@@ -39,83 +34,77 @@
         <div class="w-full max-w-md">
             <div class="bg-white rounded-lg shadow-md hover:shadow-lg transition overflow-hidden border border-gray-200 encuesta-card" data-tipo-evaluacion="@(Model.Encuestas.FirstOrDefault()?.IdTipoEvaluacion)">
                 <div class="p-6">
-                        @{
-                            var encuesta = Model.Encuestas.FirstOrDefault();
-                            IndexModel.ElementosCardHeader elementos = null;
-                            if (encuesta != null)
-                            {
-                                elementos = indexModel.GetElementosCardHeader(encuesta.IdTipoEvaluacion, encuesta.Estado);
-                            }
+                    @{
+                        var encuesta = Model.Encuestas.FirstOrDefault();
+                    }
+                    <!-- Título y Estado -->
+                    <div class="flex justify-between items-start mb-4">
+                        @if (encuesta != null && Model.ElementosCardHeader != null)
+                        {
+                            <h3 class="text-xl font-bold text-gray-900 flex-1">@Model.ElementosCardHeader?.Titulo</h3>
+                            <span class="@Model.ElementosCardHeader?.EstadoClase text-xs font-bold px-3 py-1 rounded-full whitespace-nowrap ml-2">
+                                @Model.ElementosCardHeader?.EstadoTexto
+                            </span>
                         }
-                        <!-- Título y Estado -->
-                        <div class="flex justify-between items-start mb-4">
-                            @if (encuesta != null && Model.ElementosCardHeader != null)
+                    </div>
+
+                    <!-- Descripción -->
+                    @if (encuesta != null)
+                    {
+                        <p class="text-gray-600 text-sm mb-4 line-clamp-2">
+                            @encuesta.Descripcion
+                        </p>
+                    }
+
+                    <!-- Meta información -->
+                    @if (encuesta != null)
+                    {
+                        <div class="space-y-2 text-sm text-gray-500 mb-4 border-t pt-4">
+                            <div class="flex justify-between">
+                                <span>Fecha de Creación:</span>
+                                <span class="font-semibold text-gray-700">@encuesta.FechaCreacion.ToString("dd/MM/yyyy")</span>
+                            </div>
+                            <div class="flex justify-between">
+                                <span>Vencimiento:</span>
+                                <span class="font-semibold text-gray-700">@encuesta.FechaVencimiento.ToString("dd/MM/yyyy")</span>
+                            </div>
+                            <div class="flex justify-between">
+                                <span>Preguntas:</span>
+                                <span class="font-semibold text-gray-700">@(encuesta.Preguntas?.Count ?? 0)</span>
+                            </div>
+                            <div class="flex justify-between">
+                                <span>Respuestas:</span>
+                                <span class="font-semibold text-gray-700">@(encuesta.Respuestas?.Count ?? 0)</span>
+                            </div>
+                        </div>
+                    }
+
+                    <!-- Acciones -->
+                    @if (encuesta != null)
+                    {
+                        <div class="flex space-x-3 pt-4">
+                            <a asp-action="Details" asp-route-id="@encuesta.Id" 
+                               class="flex-1 text-center bg-blue-100 text-blue-600 py-2 rounded-lg hover:bg-blue-200 transition font-semibold text-sm">
+                                👁️ Ver
+                            </a>
+                            @if (Model?.IsAdmin ?? false)
                             {
-                                <h3 class="text-xl font-bold text-gray-900 flex-1">@Model.ElementosCardHeader?.Titulo</h3>
-                                <span class="@Model.ElementosCardHeader?.EstadoClase text-xs font-bold px-3 py-1 rounded-full whitespace-nowrap ml-2">
-                                    @Model.ElementosCardHeader?.EstadoTexto
-                                </span>
+                                <a asp-controller="EditaEncuesta" asp-action="Index" asp-route-id="@encuesta.Id"
+                                   class="flex-1 text-center bg-yellow-100 text-yellow-600 py-2 rounded-lg hover:bg-yellow-200 transition font-semibold text-sm">
+                                    ✏️ Editar
+                                </a>
+                                <form method="post" asp-controller="EditaEncuesta" asp-action="Delete" asp-route-id="@encuesta.Id" class="flex-1"
+                                      onsubmit="return confirm('¿Estás seguro de que deseas eliminar esta encuesta?');">
+                                    <button type="submit" class="w-full bg-red-100 text-red-600 py-2 rounded-lg hover:bg-red-200 transition font-semibold text-sm">
+                                        🗑️ Eliminar
+                                    </button>
+                                </form>
                             }
                         </div>
-
-                        <!-- Descripción -->
-                        @if (encuesta != null)
-                        {
-                            <p class="text-gray-600 text-sm mb-4 line-clamp-2">
-                                @encuesta.Descripcion
-                            </p>
-                        }
-
-                        <!-- Meta información -->
-                        @if (encuesta != null)
-                        {
-                            <div class="space-y-2 text-sm text-gray-500 mb-4 border-t pt-4">
-                                <div class="flex justify-between">
-                                    <span>Fecha de Creación:</span>
-                                    <span class="font-semibold text-gray-700">@encuesta.FechaCreacion.ToString("dd/MM/yyyy")</span>
-                                </div>
-                                <div class="flex justify-between">
-                                    <span>Vencimiento:</span>
-                                    <span class="font-semibold text-gray-700">@encuesta.FechaVencimiento.ToString("dd/MM/yyyy")</span>
-                                </div>
-                                <div class="flex justify-between">
-                                    <span>Preguntas:</span>
-                                    <span class="font-semibold text-gray-700">@(encuesta.Preguntas?.Count ?? 0)</span>
-                                </div>
-                                <div class="flex justify-between">
-                                    <span>Respuestas:</span>
-                                    <span class="font-semibold text-gray-700">@(encuesta.Respuestas?.Count ?? 0)</span>
-                                </div>
-                            </div>
-                        }
-
-                        <!-- Acciones -->
-                        @if (encuesta != null)
-                        {
-                            <div class="flex space-x-3 pt-4">
-                                <a asp-action="Details" asp-route-id="@encuesta.Id" 
-                                   class="flex-1 text-center bg-blue-100 text-blue-600 py-2 rounded-lg hover:bg-blue-200 transition font-semibold text-sm">
-                                    👁️ Ver
-                                </a>
-                                @if (indexModel.IsAdmin())
-                                {
-                                    <a asp-controller="EditaEncuesta" asp-action="Index" asp-route-id="@encuesta.Id"
-                                       class="flex-1 text-center bg-yellow-100 text-yellow-600 py-2 rounded-lg hover:bg-yellow-200 transition font-semibold text-sm">
-                                        ✏️ Editar
-                                    </a>
-                                    <form method="post" asp-controller="EditaEncuesta" asp-action="Delete" asp-route-id="@encuesta.Id" class="flex-1"
-                                          onsubmit="return confirm('¿Estás seguro de que deseas eliminar esta encuesta?');">
-                                        <button type="submit" class="w-full bg-red-100 text-red-600 py-2 rounded-lg hover:bg-red-200 transition font-semibold text-sm">
-                                            🗑️ Eliminar
-                                        </button>
-                                    </form>
-                                }
-                            </div>
-                        }
-                        
-                    </div>
+                    }
                 </div>
             </div>
+        </div>
     }
     else
     {
@@ -133,36 +122,28 @@
 
 @section Scripts {
     <script>
+        // Manejador de filtro de tipo de evaluación
         document.addEventListener('DOMContentLoaded', function() {
             const filtroSelect = document.getElementById('filtroTipoEvaluacion');
             
-            // Evento para cuando se cambie el filtro
+            if (!filtroSelect) return;
+
             filtroSelect.addEventListener('change', function () {
-                // Crear un formulario temporal para enviar el POST
                 const form = document.createElement('form');
                 form.method = 'POST';
                 form.action = window.location.pathname;
                 
-                // Agregar los campos del formulario
-                const inputAccion = document.createElement('input');
-                inputAccion.type = 'hidden';
-                inputAccion.name = 'accion';
-                inputAccion.value = 'filtrar';
-                form.appendChild(inputAccion);
+                const filterInput = document.createElement('input');
+                filterInput.type = 'hidden';
+                filterInput.name = 'FiltroTipoEvaluacion';
+                filterInput.value = this.value;
+                form.appendChild(filterInput);
                 
-                const inputFiltro = document.createElement('input');
-                inputFiltro.type = 'hidden';
-                inputFiltro.name = 'FiltroTipoEvaluacion';
-                inputFiltro.value = this.value;
-                form.appendChild(inputFiltro);
-                
-                // Agregar el token de verificación antiforgery
-                const antiforgeryToken = document.querySelector('input[name="__RequestVerificationToken"]');
-                if (antiforgeryToken) {
-                    form.appendChild(antiforgeryToken.cloneNode(true));
+                const token = document.querySelector('input[name="__RequestVerificationToken"]');
+                if (token) {
+                    form.appendChild(token.cloneNode(true));
                 }
                 
-                // Enviar el formulario
                 document.body.appendChild(form);
                 form.submit();
             });

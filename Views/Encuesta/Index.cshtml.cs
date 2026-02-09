@@ -4,6 +4,7 @@ using System.Data;
 using EncuestasEvaluacionLiderazgo.Data;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Rendering;
+using EncuestaModel = EncuestasEvaluacionLiderazgo.Models.Encuesta;
 
 namespace EncuestasEvaluacionLiderazgo.Views.Encuesta
 {
@@ -164,6 +165,46 @@ namespace EncuestasEvaluacionLiderazgo.Views.Encuesta
                 EstadoEncuesta.Archivada => "Archivada",
                 _ => "Desconocido"
             };
+        }
+
+        /// <summary>
+        /// Filtra las encuestas por tipo de evaluación
+        /// </summary>
+        /// <param name="encuestas">Lista original de encuestas</param>
+        /// <param name="filtroTipo">ID del tipo de evaluación a filtrar (-1 o vacío = sin filtro)</param>
+        /// <returns>Lista filtrada de encuestas</returns>
+        public List<EncuestaModel> FiltrarEncuestasPorTipo(List<EncuestaModel> encuestas, string filtroTipo)
+        {
+            // Si no hay filtro o está vacío, retornar todas las encuestas
+            if (string.IsNullOrWhiteSpace(filtroTipo) || filtroTipo == "-1")
+            {
+                return encuestas;
+            }
+
+            // Si el filtro es válido, filtrar por tipo de evaluación
+            if (int.TryParse(filtroTipo, out int idTipo))
+            {
+                return encuestas.Where(e => e.IdTipoEvaluacion == idTipo).ToList();
+            }
+
+            return encuestas;
+        }
+
+        /// <summary>
+        /// Aplica el filtro de tipo de evaluación a la vista del modelo
+        /// </summary>
+        /// <param name="model">Modelo de vista con las encuestas</param>
+        /// <param name="filtroTipo">Filtro a aplicar</param>
+        public void AplicarFiltroEncuestas(EncuestaIndexViewModel model, string filtroTipo)
+        {
+            if (model?.Encuestas == null)
+            {
+                return;
+            }
+
+            var encuestasFiltradas = FiltrarEncuestasPorTipo(model.Encuestas.ToList(), filtroTipo);
+            model.Encuestas = encuestasFiltradas;
+            model.FiltroTipoEvaluacion = filtroTipo;
         }
     }
 }

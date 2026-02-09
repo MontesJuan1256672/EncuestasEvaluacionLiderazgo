@@ -90,7 +90,8 @@ namespace EncuestasEvaluacionLiderazgo.Controllers
                 FiltroTipoEvaluacion = "",
                 TiposEvaluacion = indexModel.TiposEvaluacion,
                 IndexModel = indexModel,
-                ElementosCardHeader = elementosCardHeader
+                ElementosCardHeader = elementosCardHeader,
+                IsAdmin = IsAdmin()
             };
 
             return View(viewModel);
@@ -146,7 +147,8 @@ namespace EncuestasEvaluacionLiderazgo.Controllers
                     FiltroTipoEvaluacion = FiltroTipoEvaluacion,
                     TiposEvaluacion = indexModel.TiposEvaluacion,
                     IndexModel = indexModel,
-                    ElementosCardHeader = elementosCardHeader
+                    ElementosCardHeader = elementosCardHeader,
+                    IsAdmin = IsAdmin()
                 };
 
                 return View(viewModel);

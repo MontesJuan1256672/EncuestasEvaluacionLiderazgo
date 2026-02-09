@@ -33,5 +33,10 @@ namespace EncuestasEvaluacionLiderazgo.Models
         /// Elementos del card header de la primera encuesta
         /// </summary>
         public IndexModel.ElementosCardHeader ElementosCardHeader { get; set; }
+
+        /// <summary>
+        /// Indica si el usuario actual es administrador
+        /// </summary>
+        public bool IsAdmin { get; set; } = false;
     }
 }
