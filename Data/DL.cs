@@ -362,5 +362,264 @@ namespace EncuestasEvaluacionLiderazgo.Data
             }
         }
 
+        /// <summary>
+        /// Inserta una nueva pregunta en la encuesta de evaluación de liderazgo
+        /// </summary>
+        public static bool InsertaPreguntaII(string idTipoEvaluacion, string cPregunta, string cPregunta_Ingles,
+                                             string cCompetencia, string cActividad, string cDescripcion, int nOrden)
+        {
+            SqlCommand sqlcommand = null;
+            try
+            {
+                sqlcommand = new SqlCommand("sp_insertaPreguntaII", new SqlConnection(DL.GetConEvaluaLiderazgo()));
+                sqlcommand.CommandType = CommandType.StoredProcedure;
+                sqlcommand.CommandTimeout = 0;
+
+                // Agregar parámetros
+                sqlcommand.Parameters.Add("@IdTipoEvaluacion", SqlDbType.VarChar).Value = idTipoEvaluacion;
+                sqlcommand.Parameters.Add("@cPregunta", SqlDbType.VarChar).Value = cPregunta;
+                sqlcommand.Parameters.Add("@cPregunta_Ingles", SqlDbType.VarChar).Value = cPregunta_Ingles;
+                sqlcommand.Parameters.Add("@cCompetencia", SqlDbType.VarChar).Value = cCompetencia;
+                sqlcommand.Parameters.Add("@cActividad", SqlDbType.VarChar).Value = cActividad;
+                sqlcommand.Parameters.Add("@cDescripcion", SqlDbType.VarChar).Value = cDescripcion;
+                sqlcommand.Parameters.Add("@nOrden", SqlDbType.Int).Value = nOrden;
+
+                sqlcommand.Connection.Open();
+                sqlcommand.ExecuteNonQuery();
+
+                return true;
+            }
+            catch
+            {
+                return false;
+            }
+            finally
+            {
+                if (sqlcommand != null && sqlcommand.Connection != null)
+                {
+                    if (sqlcommand.Connection.State == ConnectionState.Open)
+                        sqlcommand.Connection.Close();
+                }
+            }
+        }
+
+        /// <summary>
+        /// Obtiene las competencias únicas de una evaluación
+        /// </summary>
+        public static DataSet TraeCompetencias()
+        {
+            SqlCommand sqlcommand = null;
+            SqlDataAdapter sqldataadapter = null;
+            DataSet dataset = new DataSet();
+            try
+            {
+                sqlcommand = new SqlCommand("sp_traeCompetencias", new SqlConnection(DL.GetConEvaluaLiderazgo()));
+                sqlcommand.CommandType = CommandType.StoredProcedure;
+                sqlcommand.CommandTimeout = 0;
+
+                sqldataadapter = new SqlDataAdapter(sqlcommand);
+                sqldataadapter.Fill(dataset);
+
+                return dataset;
+            }
+            catch (Exception ex)
+            {
+                DataTable datatable = new DataTable();
+                DataRow ren;
+                datatable.Columns.Add(new DataColumn("Id", typeof(int)));
+                datatable.Columns.Add(new DataColumn("Error", typeof(string)));
+
+                ren = datatable.NewRow();
+                ren["Id"] = 0;
+                ren["Error"] = ex.Message;
+                datatable.Rows.Add(ren);
+
+                dataset.Tables.Add(datatable);
+                return dataset;
+            }
+            finally
+            {
+                if (sqlcommand != null && sqlcommand.Connection != null)
+                {
+                    if (sqlcommand.Connection.State == ConnectionState.Open)
+                        sqlcommand.Connection.Close();
+                }
+            }
+        }
+
+        /// <summary>
+        /// Obtiene las actividades únicas de una evaluación
+        /// </summary>
+        public static DataSet TraeActividades()
+        {
+            SqlCommand sqlcommand = null;
+            SqlDataAdapter sqldataadapter = null;
+            DataSet dataset = new DataSet();
+            try
+            {
+                sqlcommand = new SqlCommand("sp_traeActividades", new SqlConnection(DL.GetConEvaluaLiderazgo()));
+                sqlcommand.CommandType = CommandType.StoredProcedure;
+                sqlcommand.CommandTimeout = 0;
+
+                sqldataadapter = new SqlDataAdapter(sqlcommand);
+                sqldataadapter.Fill(dataset);
+
+                return dataset;
+            }
+            catch (Exception ex)
+            {
+                DataTable datatable = new DataTable();
+                DataRow ren;
+                datatable.Columns.Add(new DataColumn("Id", typeof(int)));
+                datatable.Columns.Add(new DataColumn("Error", typeof(string)));
+
+                ren = datatable.NewRow();
+                ren["Id"] = 0;
+                ren["Error"] = ex.Message;
+                datatable.Rows.Add(ren);
+
+                dataset.Tables.Add(datatable);
+                return dataset;
+            }
+            finally
+            {
+                if (sqlcommand != null && sqlcommand.Connection != null)
+                {
+                    if (sqlcommand.Connection.State == ConnectionState.Open)
+                        sqlcommand.Connection.Close();
+                }
+            }
+        }
+
+        /// <summary>
+        /// Obtiene las descripciones únicas de una evaluación
+        /// </summary>
+        public static DataSet TraeDescripciones()
+        {
+            SqlCommand sqlcommand = null;
+            SqlDataAdapter sqldataadapter = null;
+            DataSet dataset = new DataSet();
+            try
+            {
+                sqlcommand = new SqlCommand("sp_traeDescripciones", new SqlConnection(DL.GetConEvaluaLiderazgo()));
+                sqlcommand.CommandType = CommandType.StoredProcedure;
+                sqlcommand.CommandTimeout = 0;
+
+                sqldataadapter = new SqlDataAdapter(sqlcommand);
+                sqldataadapter.Fill(dataset);
+
+                return dataset;
+            }
+            catch (Exception ex)
+            {
+                DataTable datatable = new DataTable();
+                DataRow ren;
+                datatable.Columns.Add(new DataColumn("Id", typeof(int)));
+                datatable.Columns.Add(new DataColumn("Error", typeof(string)));
+
+                ren = datatable.NewRow();
+                ren["Id"] = 0;
+                ren["Error"] = ex.Message;
+                datatable.Rows.Add(ren);
+
+                dataset.Tables.Add(datatable);
+                return dataset;
+            }
+            finally
+            {
+                if (sqlcommand != null && sqlcommand.Connection != null)
+                {
+                    if (sqlcommand.Connection.State == ConnectionState.Open)
+                        sqlcommand.Connection.Close();
+                }
+            }
+        }
+
+        /// <summary>
+        /// Obtiene las preguntas de un tipo de evaluación específico
+        /// </summary>
+        /// <param name="IdTipoEvaluacion">ID del tipo de evaluación</param>
+        /// <returns>DataSet con las preguntas</returns>
+        public static DataSet TraePreguntasII(string IdTipoEvaluacion)
+        {
+            SqlCommand sqlcommand = null;
+            SqlDataAdapter sqldataadapter = null;
+            DataSet dataset = new DataSet();
+            try
+            {
+                sqlcommand = new SqlCommand("sp_traePreguntasII", new SqlConnection(DL.GetConEvaluaLiderazgo()));
+                sqlcommand.CommandType = CommandType.StoredProcedure;
+                sqlcommand.CommandTimeout = 0;
+                sqlcommand.Parameters.Add("@IdTipoEvaluacion", SqlDbType.VarChar).Value = IdTipoEvaluacion;
+
+                sqldataadapter = new SqlDataAdapter(sqlcommand);
+                sqldataadapter.Fill(dataset);
+
+                return dataset;
+            }
+            catch (Exception ex)
+            {
+                DataTable datatable = new DataTable();
+                DataRow ren;
+                datatable.Columns.Add(new DataColumn("Id", typeof(int)));
+                datatable.Columns.Add(new DataColumn("Error", typeof(string)));
+
+                ren = datatable.NewRow();
+                ren["Id"] = 0;
+                ren["Error"] = ex.Message;
+                datatable.Rows.Add(ren);
+
+                dataset.Tables.Add(datatable);
+                return dataset;
+            }
+            finally
+            {
+                if (sqlcommand != null && sqlcommand.Connection != null)
+                {
+                    if (sqlcommand.Connection.State == ConnectionState.Open)
+                        sqlcommand.Connection.Close();
+                }
+            }
+        }
+
+        /// <summary>
+        /// Actualiza el estado de una encuesta en la base de datos
+        /// </summary>
+        /// <param name="IdTipoEvaluacion">ID del tipo de evaluación</param>
+        /// <param name="bActivo">Estado activo (1 = Activo, 0 = Baja)</param>
+        /// <returns>True si la actualización fue exitosa, False en caso contrario</returns>
+        public static bool ActualizaEstadoEncuesta(string IdTipoEvaluacion, int bActivo)
+        {
+            SqlConnection SqlCon = null;
+            try
+            {
+                SqlCon = new SqlConnection(GetConEvaluaLiderazgo());
+                SqlCon.Open();
+                
+                using (SqlCommand cmd = new SqlCommand("sp_ActualizaEstadoEncuesta", SqlCon))
+                {
+                    cmd.CommandType = CommandType.StoredProcedure;
+                    cmd.Parameters.Add("@IdTipoEvaluacion", SqlDbType.VarChar).Value = IdTipoEvaluacion;
+                    cmd.Parameters.Add("@bActivo", SqlDbType.Int).Value = bActivo;
+                    
+                    cmd.CommandTimeout = 0;
+                    cmd.ExecuteNonQuery();
+                    
+                    return true;
+                }
+            }
+            catch (Exception ex)
+            {
+                throw ex;
+            }
+            finally
+            {
+                if (SqlCon != null && SqlCon.State == ConnectionState.Open)
+                    SqlCon.Close();
+                SqlCon?.Dispose();
+                GC.Collect();
+            }
+        }
+
     }
 }
