@@ -110,38 +110,6 @@ namespace EncuestasEvaluacionLiderazgo.Data
         }
 
         /// <summary>
-        /// Busca datos ejecutando una consulta SQL
-        /// </summary>
-        /// <returns>DataTable con los resultados</returns>
-        public static DataTable BuscaDatos()
-        {
-            SqlConnection SqlCon = null;
-
-            try
-            {
-                SqlCon = GetConnection();
-                using (SqlCommand cmd = new SqlCommand("Busca_Datos2", SqlCon))
-                {
-                    cmd.CommandType = CommandType.Text;
-                    SqlDataAdapter adapter = new SqlDataAdapter(cmd);
-                    DataSet ds = new DataSet();
-                    adapter.Fill(ds);
-                    return ds.Tables[0];
-                }
-            }
-            catch (Exception Ex)
-            {
-                throw Ex;
-            }
-            finally
-            {
-                if (SqlCon != null)
-                    SqlCon.Dispose();
-                GC.Collect();
-            }
-        }
-
-        /// <summary>
         /// Actualiza el registro de declaración de un personal
         /// </summary>
         /// <param name="IdPersonal">ID del personal</param>
@@ -365,8 +333,8 @@ namespace EncuestasEvaluacionLiderazgo.Data
         /// <summary>
         /// Inserta una nueva pregunta en la encuesta de evaluación de liderazgo
         /// </summary>
-        public static bool InsertaPreguntaII(string idTipoEvaluacion, string cPregunta, string cPregunta_Ingles,
-                                             string cCompetencia, string cActividad, string cDescripcion, int nOrden)
+        public static bool InsertaPreguntaII(int idTipoEvaluacion, string cPregunta, string cPregunta_Ingles,
+                                             int cCompetencia, int cActividad, int cDescripcion, int nOrden)
         {
             SqlCommand sqlcommand = null;
             try
@@ -376,12 +344,54 @@ namespace EncuestasEvaluacionLiderazgo.Data
                 sqlcommand.CommandTimeout = 0;
 
                 // Agregar parámetros
-                sqlcommand.Parameters.Add("@IdTipoEvaluacion", SqlDbType.VarChar).Value = idTipoEvaluacion;
+                sqlcommand.Parameters.Add("@IdTipoEvaluacion", SqlDbType.Int).Value = idTipoEvaluacion;
                 sqlcommand.Parameters.Add("@cPregunta", SqlDbType.VarChar).Value = cPregunta;
                 sqlcommand.Parameters.Add("@cPregunta_Ingles", SqlDbType.VarChar).Value = cPregunta_Ingles;
-                sqlcommand.Parameters.Add("@cCompetencia", SqlDbType.VarChar).Value = cCompetencia;
-                sqlcommand.Parameters.Add("@cActividad", SqlDbType.VarChar).Value = cActividad;
-                sqlcommand.Parameters.Add("@cDescripcion", SqlDbType.VarChar).Value = cDescripcion;
+                sqlcommand.Parameters.Add("@IdCompetencia", SqlDbType.Int).Value = cCompetencia;
+                sqlcommand.Parameters.Add("@IdActividad", SqlDbType.Int).Value = cActividad;
+                sqlcommand.Parameters.Add("@IDPerfilPregunta", SqlDbType.Int).Value = cDescripcion;
+                sqlcommand.Parameters.Add("@nOrden", SqlDbType.Int).Value = nOrden;
+
+                sqlcommand.Connection.Open();
+                sqlcommand.ExecuteNonQuery();
+
+                return true;
+            }
+            catch
+            {
+                return false;
+            }
+            finally
+            {
+                if (sqlcommand != null && sqlcommand.Connection != null)
+                {
+                    if (sqlcommand.Connection.State == ConnectionState.Open)
+                        sqlcommand.Connection.Close();
+                }
+            }
+        }
+
+        /// <summary>
+        /// Actualiza una pregunta existente en la encuesta de evaluación de liderazgo
+        /// </summary>
+        public static bool UpdatePreguntaII(int idPregunta, int idTipoEvaluacion, string cPregunta, string cPregunta_Ingles,
+                                            int cCompetencia, int cActividad, int cDescripcion, int nOrden)
+        {
+            SqlCommand sqlcommand = null;
+            try
+            {
+                sqlcommand = new SqlCommand("sp_actuPreguntaIII", new SqlConnection(DL.GetConEvaluaLiderazgo()));
+                sqlcommand.CommandType = CommandType.StoredProcedure;
+                sqlcommand.CommandTimeout = 0;
+
+                // Agregar parámetros
+                sqlcommand.Parameters.Add("@IdPregunta", SqlDbType.Int).Value = idPregunta;
+                sqlcommand.Parameters.Add("@IdTipoEvaluacion", SqlDbType.Int).Value = idTipoEvaluacion;
+                sqlcommand.Parameters.Add("@cPregunta", SqlDbType.VarChar).Value = cPregunta;
+                sqlcommand.Parameters.Add("@cPregunta_Ingles", SqlDbType.VarChar).Value = cPregunta_Ingles;
+                sqlcommand.Parameters.Add("@IdCompetencia", SqlDbType.Int).Value = cCompetencia;
+                sqlcommand.Parameters.Add("@IdActividad", SqlDbType.Int).Value = cActividad;
+                sqlcommand.Parameters.Add("@IDPerfilPregunta", SqlDbType.Int).Value = cDescripcion;
                 sqlcommand.Parameters.Add("@nOrden", SqlDbType.Int).Value = nOrden;
 
                 sqlcommand.Connection.Open();
@@ -601,6 +611,84 @@ namespace EncuestasEvaluacionLiderazgo.Data
                     cmd.CommandType = CommandType.StoredProcedure;
                     cmd.Parameters.Add("@IdTipoEvaluacion", SqlDbType.VarChar).Value = IdTipoEvaluacion;
                     cmd.Parameters.Add("@bActivo", SqlDbType.Int).Value = bActivo;
+                    
+                    cmd.CommandTimeout = 0;
+                    cmd.ExecuteNonQuery();
+                    
+                    return true;
+                }
+            }
+            catch (Exception ex)
+            {
+                throw ex;
+            }
+            finally
+            {
+                if (SqlCon != null && SqlCon.State == ConnectionState.Open)
+                    SqlCon.Close();
+                SqlCon?.Dispose();
+                GC.Collect();
+            }
+        }
+
+        /// <summary>
+        /// Actualiza el estado activo de una pregunta en la base de datos
+        /// </summary>
+        /// <param name="idPregunta">ID de la pregunta</param>
+        /// <param name="bActivo">Estado activo (1 = Activo, 0 = Inactivo)</param>
+        /// <returns>True si la actualización fue exitosa, False en caso contrario</returns>
+        public static bool ActualizaEstadoPregunta(int idPregunta, int bActivo)
+        {
+            SqlConnection SqlCon = null;
+            try
+            {
+                SqlCon = new SqlConnection(GetConEvaluaLiderazgo());
+                SqlCon.Open();
+                
+                using (SqlCommand cmd = new SqlCommand("sp_actuPreguntaStat", SqlCon))
+                {
+                    cmd.CommandType = CommandType.StoredProcedure;
+                    cmd.Parameters.Add("@IdPregunta", SqlDbType.Int).Value = idPregunta;
+                    cmd.Parameters.Add("@bActivo", SqlDbType.Bit).Value = (bActivo == 1);
+                    
+                    cmd.CommandTimeout = 0;
+                    cmd.ExecuteNonQuery();
+                    
+                    return true;
+                }
+            }
+            catch (Exception ex)
+            {
+                throw ex;
+            }
+            finally
+            {
+                if (SqlCon != null && SqlCon.State == ConnectionState.Open)
+                    SqlCon.Close();
+                SqlCon?.Dispose();
+                GC.Collect();
+            }
+        }
+
+        /// <summary>
+        /// Actualiza el número de orden de una pregunta en la base de datos
+        /// </summary>
+        /// <param name="idPregunta">ID de la pregunta</param>
+        /// <param name="nOrden">Nuevo número de orden</param>
+        /// <returns>True si la actualización fue exitosa, False en caso contrario</returns>
+        public static bool ActualizaNOrden(int idPregunta, int nOrden)
+        {
+            SqlConnection SqlCon = null;
+            try
+            {
+                SqlCon = new SqlConnection(GetConEvaluaLiderazgo());
+                SqlCon.Open();
+                
+                using (SqlCommand cmd = new SqlCommand("sp_actuPreguntaOrden", SqlCon))
+                {
+                    cmd.CommandType = CommandType.StoredProcedure;
+                    cmd.Parameters.Add("@IdPregunta", SqlDbType.Int).Value = idPregunta;
+                    cmd.Parameters.Add("@nOrden", SqlDbType.Int).Value = nOrden;
                     
                     cmd.CommandTimeout = 0;
                     cmd.ExecuteNonQuery();

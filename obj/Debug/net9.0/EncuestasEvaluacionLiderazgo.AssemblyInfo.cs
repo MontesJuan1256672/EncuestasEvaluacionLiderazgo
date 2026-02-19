@@ -14,7 +14,7 @@ using System.Reflection;
 [assembly: System.Reflection.AssemblyCompanyAttribute("EncuestasEvaluacionLiderazgo")]
 [assembly: System.Reflection.AssemblyConfigurationAttribute("Debug")]
 [assembly: System.Reflection.AssemblyFileVersionAttribute("1.0.0.0")]
-[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+15e4c0bb5872088bc8eab1a8f3900e30ec2b4142")]
+[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+31e29d1184ba5b485bac4ba40f07220f1baee8c0")]
 [assembly: System.Reflection.AssemblyProductAttribute("EncuestasEvaluacionLiderazgo")]
 [assembly: System.Reflection.AssemblyTitleAttribute("EncuestasEvaluacionLiderazgo")]
 [assembly: System.Reflection.AssemblyVersionAttribute("1.0.0.0")]

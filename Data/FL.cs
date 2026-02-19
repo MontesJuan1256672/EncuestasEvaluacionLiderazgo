@@ -221,64 +221,13 @@ namespace EncuestasEvaluacionLiderazgo.Data
         }
 
         /// <summary>
-        /// Obtiene las preguntas según el tipo de evaluación ejecutando el SP sp_traePreguntasII
+        /// Obtiene las preguntas según el tipo de evaluación
         /// </summary>
         /// <param name="IdTipoEvaluacion">Identificador del tipo de evaluación</param>
         /// <returns>DataSet con las preguntas</returns>
         public static DataSet TraePreguntasII(string IdTipoEvaluacion)
         {
-            SqlConnection sqlConnection = null;
-            SqlDataAdapter sqlDataAdapter = null;
-            DataSet dataSet = new DataSet();
-
-            try
-            {
-                // Obtener la conexión del DWH
-                string connectionString = DL.GetConEvaluaLiderazgo();
-                
-                if (string.IsNullOrEmpty(connectionString))
-                {
-                    throw new Exception("No se pudo obtener la cadena de conexión del EvaluaLiderazgo");
-                }
-
-                sqlConnection = new SqlConnection(connectionString);
-                sqlConnection.Open();
-
-                // Crear comando para ejecutar el SP
-                using (SqlCommand command = new SqlCommand("sp_traePreguntasII", sqlConnection))
-                {
-                    command.CommandType = CommandType.StoredProcedure;
-                    command.CommandTimeout = 0;
-
-                    // Agregar el parámetro
-                    command.Parameters.AddWithValue("@IdTipoEvaluacion", IdTipoEvaluacion);
-
-                    // Ejecutar el stored procedure
-                    sqlDataAdapter = new SqlDataAdapter(command);
-                    sqlDataAdapter.Fill(dataSet);
-                }
-
-                return dataSet;
-            }
-            catch (Exception ex)
-            {
-                throw new Exception("Error al obtener preguntas: " + ex.Message);
-            }
-            finally
-            {
-                if (sqlConnection != null && sqlConnection.State == ConnectionState.Open)
-                {
-                    sqlConnection.Close();
-                    sqlConnection.Dispose();
-                }
-
-                if (sqlDataAdapter != null)
-                {
-                    sqlDataAdapter.Dispose();
-                }
-
-                GC.Collect();
-            }
+            return DL.TraePreguntasII(IdTipoEvaluacion);
         }
 
         /// <summary>
@@ -301,6 +250,196 @@ namespace EncuestasEvaluacionLiderazgo.Data
                 throw new Exception("Error al ejecutar consulta genérica: " + ex.Message);
             }
         }
+
+        /// <summary>
+        /// Actualiza el estado activo de una encuesta
+        /// </summary>
+        /// <param name="idTipoEvaluacion">ID del tipo de evaluación</param>
+        /// <param name="bActivo">Estado activo (1 = Activo, 0 = Baja)</param>
+        /// <returns>True si la actualización fue exitosa, False en caso contrario</returns>
+        public static bool ActualizaEstadoEncuesta(string idTipoEvaluacion, int bActivo)
+        {
+            try
+            {
+                // Validar parámetros
+                if (string.IsNullOrEmpty(idTipoEvaluacion))
+                {
+                    throw new Exception("El ID del tipo de evaluación no puede estar vacío.");
+                }
+
+                if (bActivo != 0 && bActivo != 1)
+                {
+                    throw new Exception("El estado activo debe ser 0 o 1.");
+                }
+
+                // Llamar al método DL para actualizar el estado
+                return DL.ActualizaEstadoEncuesta(idTipoEvaluacion, bActivo);
+            }
+            catch (Exception ex)
+            {
+                throw new Exception("Error al actualizar el estado de la encuesta: " + ex.Message);
+            }
+        }
+
+        /// <summary>
+        /// Inserta una nueva pregunta en la encuesta
+        /// </summary>
+        public static bool InsertaPreguntaII(int idTipoEvaluacion, string cPregunta, string cPregunta_Ingles,
+                                             int cCompetencia, int cActividad, int cDescripcion, int nOrden)
+        {
+            try
+            {
+                // Validar parámetros
+                if (idTipoEvaluacion <= 0)
+                    throw new Exception("El ID del tipo de evaluación debe ser mayor a 0.");
+                
+                if (string.IsNullOrWhiteSpace(cPregunta))
+                    throw new Exception("La pregunta no puede estar vacía.");
+                
+                if (cCompetencia <= 0)
+                    throw new Exception("El ID de competencia debe ser mayor a 0.");
+                
+                if (cActividad <= 0)
+                    throw new Exception("El ID de actividad debe ser mayor a 0.");
+                
+                if (cDescripcion <= 0)
+                    throw new Exception("El ID de descripción debe ser mayor a 0.");
+                
+                if (nOrden <= 0)
+                    throw new Exception("El número de orden debe ser mayor a 0.");
+
+                // Llamar al método DL para insertar la pregunta
+                return DL.InsertaPreguntaII(idTipoEvaluacion, cPregunta, cPregunta_Ingles, 
+                                           cCompetencia, cActividad, cDescripcion, nOrden);
+            }
+            catch (Exception ex)
+            {
+                throw new Exception("Error al insertar la pregunta: " + ex.Message);
+            }
+        }
+
+        /// <summary>
+        /// Actualiza una pregunta existente en la encuesta
+        /// </summary>
+        public static bool UpdatePreguntaII(int idPregunta, int idTipoEvaluacion, string cPregunta, string cPregunta_Ingles,
+                                            int cCompetencia, int cActividad, int cDescripcion, int nOrden)
+        {
+            try
+            {
+                // Validar parámetros
+                if (idPregunta <= 0)
+                    throw new Exception("El ID de la pregunta debe ser mayor a 0.");
+                
+                if (idTipoEvaluacion <= 0)
+                    throw new Exception("El ID del tipo de evaluación debe ser mayor a 0.");
+                
+                if (string.IsNullOrWhiteSpace(cPregunta))
+                    throw new Exception("La pregunta no puede estar vacía.");
+                
+                if (cCompetencia <= 0)
+                    throw new Exception("El ID de competencia debe ser mayor a 0.");
+                
+                if (cActividad <= 0)
+                    throw new Exception("El ID de actividad debe ser mayor a 0.");
+                
+                if (cDescripcion <= 0)
+                    throw new Exception("El ID de descripción debe ser mayor a 0.");
+                
+                if (nOrden <= 0)
+                    throw new Exception("El número de orden debe ser mayor a 0.");
+
+                // Llamar al método DL para actualizar la pregunta
+                return DL.UpdatePreguntaII(idPregunta, idTipoEvaluacion, cPregunta, cPregunta_Ingles, 
+                                          cCompetencia, cActividad, cDescripcion, nOrden);
+            }
+            catch (Exception ex)
+            {
+                throw new Exception("Error al actualizar la pregunta: " + ex.Message);
+            }
+        }
+
+        /// <summary>
+        /// Obtiene las competencias únicas de una evaluación
+        /// </summary>
+        public static DataSet TraeCompetencias()
+        {
+            return DL.TraeCompetencias();
+        }
+
+        /// <summary>
+        /// Obtiene las actividades únicas de una evaluación
+        /// </summary>
+        public static DataSet TraeActividades()
+        {
+            return DL.TraeActividades();
+        }
+
+        /// <summary>
+        /// Obtiene las descripciones únicas de una evaluación
+        /// </summary>
+        public static DataSet TraeDescripciones()
+        {
+            return DL.TraeDescripciones();
+        }
+
+        /// <summary>
+        /// Actualiza el estado activo de una pregunta
+        /// </summary>
+        /// <param name="idPregunta">ID de la pregunta</param>
+        /// <param name="bActivo">Estado activo (1 = Activo, 0 = Inactivo)</param>
+        /// <returns>True si la actualización fue exitosa, False en caso contrario</returns>
+        public static bool ActualizaEstadoPregunta(int idPregunta, int bActivo)
+        {
+            try
+            {
+                // Validar parámetros
+                if (idPregunta <= 0)
+                {
+                    throw new Exception("El ID de la pregunta debe ser mayor a 0.");
+                }
+
+                if (bActivo != 0 && bActivo != 1)
+                {
+                    throw new Exception("El estado debe ser 0 o 1.");
+                }
+
+                // Llamar al método DL para actualizar el estado
+                return DL.ActualizaEstadoPregunta(idPregunta, bActivo);
+            }
+            catch (Exception ex)
+            {
+                throw new Exception("Error al actualizar el estado de la pregunta: " + ex.Message);
+            }
+        }
+
+        /// <summary>
+        /// Actualiza el número de orden de una pregunta
+        /// </summary>
+        /// <param name="idPregunta">ID de la pregunta</param>
+        /// <param name="nOrden">Nuevo número de orden</param>
+        /// <returns>True si la actualización fue exitosa, False en caso contrario</returns>
+        public static bool ActualizaNOrden(int idPregunta, int nOrden)
+        {
+            try
+            {
+                // Validar parámetros
+                if (idPregunta <= 0)
+                {
+                    throw new Exception("El ID de la pregunta debe ser mayor a 0.");
+                }
+
+                if (nOrden <= 0)
+                {
+                    throw new Exception("El número de orden debe ser mayor a 0.");
+                }
+
+                // Llamar al método DL para actualizar el número de orden
+                return DL.ActualizaNOrden(idPregunta, nOrden);
+            }
+            catch (Exception ex)
+            {
+                throw new Exception("Error al actualizar el número de orden: " + ex.Message);
+            }
+        }
     }
 }
-

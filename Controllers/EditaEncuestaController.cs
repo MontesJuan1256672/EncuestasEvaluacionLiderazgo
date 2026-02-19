@@ -4,6 +4,7 @@ using System.Collections.Generic;
 using System.Threading.Tasks;
 using EncuestasEvaluacionLiderazgo.Services;
 using EncuestasEvaluacionLiderazgo.Models;
+using EncuestasEvaluacionLiderazgo.Data;
 
 namespace EncuestasEvaluacionLiderazgo.Controllers
 {
@@ -58,7 +59,7 @@ namespace EncuestasEvaluacionLiderazgo.Controllers
         /// Solo administradores pueden editar encuestas
         /// </summary>
         [HttpGet("{id}")]
-        public async Task<IActionResult> Index(int id)
+        public async Task<IActionResult> Index(int id, string filtroTipo = "")
         {
             if (!IsAuthenticated())
                 return RedirectToAction("Login", "Auth");
@@ -74,6 +75,9 @@ namespace EncuestasEvaluacionLiderazgo.Controllers
             // Verificar que el usuario sea el creador de la encuesta
             if (encuesta.UsuarioCreadorId != GetCurrentUserId())
                 return Forbid();
+
+            // Pasar filtroTipo a la vista mediante ViewBag
+            ViewBag.FiltroTipo = filtroTipo;
 
             return View(encuesta);
         }
@@ -179,6 +183,293 @@ namespace EncuestasEvaluacionLiderazgo.Controllers
 
             TempData["Success"] = "Encuesta eliminada correctamente.";
             return RedirectToAction("Index", "Encuesta");
+        }
+
+        /// <summary>
+        /// Actualiza el estado activo de una encuesta (Activo/Baja)
+        /// </summary>
+        /// <param name="filtroTipo">ID del tipo de evaluación (filtroTipo)</param>
+        /// <param name="id">ID de la encuesta</param>
+        /// <param name="estado">Estado a actualizar (true = Activo, false = Baja)</param>
+        [HttpPost]
+        [Route("UpdateEstado/{filtroTipo}")]
+        public async Task<IActionResult> UpdateEstado(int filtroTipo, int id, string estado)
+        {
+            if (!IsAuthenticated())
+                return RedirectToAction("Login", "Auth");
+
+            try
+            {
+                // Convertir el estado string a int (true = 1, false = 0)
+                int bActivo = estado?.ToLower() == "true" ? 1 : 0;
+
+                // Llamar al método FL.ActualizaEstadoEncuesta
+                bool resultado = FL.ActualizaEstadoEncuesta(filtroTipo.ToString(), bActivo);
+
+                if (resultado)
+                {
+                    TempData["Success"] = "Estado de la encuesta actualizado correctamente.";
+                }
+                else
+                {
+                    TempData["Error"] = "No se pudo actualizar el estado de la encuesta.";
+                }
+            }
+            catch (Exception ex)
+            {
+                TempData["Error"] = "Error al actualizar el estado: " + ex.Message;
+            }
+
+            // Redirigir de vuelta a la página de edición con ambos parámetros
+            return RedirectToAction("Index", new { id = id, filtroTipo = filtroTipo });
+        }
+
+        /// <summary>
+        /// Crea una nueva pregunta en una encuesta
+        /// </summary>
+        [HttpPost]
+        [Route("CreatePregunta/{filtroTipo}")]
+        public async Task<IActionResult> CreatePregunta(int filtroTipo, int encuestaId, string cPregunta, 
+                                                        string cPregunta_Ingles, int cCompetencia, 
+                                                        int cActividad, int cDescripcion, int nOrden)
+        {
+            if (!IsAuthenticated())
+                return RedirectToAction("Login", "Auth");
+
+            try
+            {
+                // Validar que los campos requeridos no estén vacíos
+                if (string.IsNullOrWhiteSpace(cPregunta) || string.IsNullOrWhiteSpace(cPregunta_Ingles))
+                {
+                    TempData["Error"] = "La pregunta en español e inglés son requeridas.";
+                    return RedirectToAction("Index", new { id = encuestaId, filtroTipo = filtroTipo });
+                }
+
+                // Aquí insertar la pregunta
+                bool resultado = FL.InsertaPreguntaII(
+                    filtroTipo, 
+                    cPregunta, 
+                    cPregunta_Ingles, 
+                    cCompetencia, 
+                    cActividad, 
+                    cDescripcion, 
+                    nOrden
+                );
+
+                if (resultado)
+                {
+                    TempData["Success"] = "Pregunta agregada correctamente.";
+                }
+                else
+                {
+                    TempData["Error"] = "No se pudo agregar la pregunta. Intente nuevamente.";
+                }
+            }
+            catch (Exception ex)
+            {
+                TempData["Error"] = "Error al agregar la pregunta: " + ex.Message;
+            }
+
+            return RedirectToAction("Index", new { id = encuestaId, filtroTipo = filtroTipo });
+        }
+
+        /// <summary>
+        /// Actualiza una pregunta existente en una encuesta
+        /// </summary>
+        [HttpPost]
+        [Route("UpdatePregunta/{filtroTipo}")]
+        public async Task<IActionResult> UpdatePregunta(int filtroTipo, int encuestaId, int idPregunta, 
+                                                        string cPregunta, string cPregunta_Ingles, 
+                                                        int cCompetencia, int cActividad, int cDescripcion, int nOrden)
+        {
+            if (!IsAuthenticated())
+                return RedirectToAction("Login", "Auth");
+
+            try
+            {
+                // Validar que los campos requeridos no estén vacíos
+                if (string.IsNullOrWhiteSpace(cPregunta) || string.IsNullOrWhiteSpace(cPregunta_Ingles))
+                {
+                    TempData["Error"] = "La pregunta en español e inglés son requeridas.";
+                    return RedirectToAction("Index", new { id = encuestaId, filtroTipo = filtroTipo });
+                }
+
+                // Validar que el ID de pregunta sea válido
+                if (idPregunta <= 0)
+                {
+                    TempData["Error"] = "ID de pregunta inválido.";
+                    return RedirectToAction("Index", new { id = encuestaId, filtroTipo = filtroTipo });
+                }
+
+                // Llamar al método FL para actualizar la pregunta
+                bool resultado = EncuestasEvaluacionLiderazgo.Data.FL.UpdatePreguntaII(
+                    idPregunta,
+                    filtroTipo, 
+                    cPregunta, 
+                    cPregunta_Ingles, 
+                    cCompetencia, 
+                    cActividad, 
+                    cDescripcion, 
+                    nOrden
+                );
+
+                if (resultado)
+                {
+                    TempData["Success"] = "Pregunta actualizada correctamente.";
+                }
+                else
+                {
+                    TempData["Error"] = "No se pudo actualizar la pregunta. Intente nuevamente.";
+                }
+            }
+            catch (Exception ex)
+            {
+                TempData["Error"] = "Error al actualizar la pregunta: " + ex.Message;
+            }
+
+            return RedirectToAction("Index", new { id = encuestaId, filtroTipo = filtroTipo });
+        }
+
+        /// <summary>
+        /// Elimina (desactiva) una pregunta existente de una encuesta
+        /// </summary>
+        [HttpPost]
+        [Route("DeletePregunta")]
+        public IActionResult DeletePregunta(int idPregunta)
+        {
+            if (!IsAuthenticated())
+                return Unauthorized(new { success = false, message = "No autenticado" });
+
+            try
+            {
+                // Validar parámetros
+                if (idPregunta <= 0)
+                {
+                    return Json(new { success = false, message = "ID de pregunta inválido." });
+                }
+
+                // Llamar al método FL para desactivar la pregunta (bActivo = 0)
+                bool resultado = FL.ActualizaEstadoPregunta(idPregunta, 0);
+
+                if (resultado)
+                {
+                    return Json(new { success = true, message = "Pregunta eliminada correctamente." });
+                }
+                else
+                {
+                    return Json(new { success = false, message = "No se pudo eliminar la pregunta." });
+                }
+            }
+            catch (Exception ex)
+            {
+                return Json(new { success = false, message = "Error al eliminar la pregunta: " + ex.Message });
+            }
+        }
+
+        /// <summary>
+        /// Mueve una pregunta hacia arriba (disminuye su número de orden)
+        /// Intercambia el orden con la pregunta anterior
+        /// </summary>
+        [HttpPost]
+        [Route("MoverPreguntaArriba")]
+        public IActionResult MoverPreguntaArriba(int idPregunta, int nOrden, int idPreguntaAnterior)
+        {
+            if (!IsAuthenticated())
+                return Unauthorized(new { success = false, message = "No autenticado" });
+
+            try
+            {
+                // Validar parámetros
+                if (idPregunta <= 0)
+                {
+                    return Json(new { success = false, message = "ID de pregunta inválido." });
+                }
+
+                if (idPreguntaAnterior <= 0)
+                {
+                    return Json(new { success = false, message = "ID de pregunta anterior inválido." });
+                }
+
+                // Validar que no sea la primera pregunta (nOrden = 1)
+                if (nOrden <= 1)
+                {
+                    return Json(new { success = false, message = "No se puede mover la pregunta hacia arriba." });
+                }
+
+                // Calcular el nuevo orden para ambas preguntas
+                int nuevoNOrdenActual = nOrden - 1;
+                int nuevoNOrdenAnterior = nOrden;
+
+                // Actualizar ambas preguntas
+                bool resultado1 = FL.ActualizaNOrden(idPregunta, nuevoNOrdenActual);
+                bool resultado2 = FL.ActualizaNOrden(idPreguntaAnterior, nuevoNOrdenAnterior);
+
+                if (resultado1 && resultado2)
+                {
+                    return Json(new { success = true, message = "Pregunta movida hacia arriba correctamente." });
+                }
+                else
+                {
+                    return Json(new { success = false, message = "No se pudo mover la pregunta." });
+                }
+            }
+            catch (Exception ex)
+            {
+                return Json(new { success = false, message = "Error al mover la pregunta: " + ex.Message });
+            }
+        }
+
+        /// <summary>
+        /// Mueve una pregunta hacia abajo (aumenta su número de orden)
+        /// Intercambia el orden con la pregunta siguiente
+        /// </summary>
+        [HttpPost]
+        [Route("MoverPreguntaAbajo")]
+        public IActionResult MoverPreguntaAbajo(int idPregunta, int nOrden, int idPreguntaSiguiente)
+        {
+            if (!IsAuthenticated())
+                return Unauthorized(new { success = false, message = "No autenticado" });
+
+            try
+            {
+                // Validar parámetros
+                if (idPregunta <= 0)
+                {
+                    return Json(new { success = false, message = "ID de pregunta inválido." });
+                }
+
+                if (idPreguntaSiguiente <= 0)
+                {
+                    return Json(new { success = false, message = "ID de pregunta siguiente inválido." });
+                }
+
+                // Validar que no sea la última pregunta (verificamos que nOrden sea válido)
+                if (nOrden <= 0)
+                {
+                    return Json(new { success = false, message = "Número de orden inválido." });
+                }
+
+                // Calcular el nuevo orden para ambas preguntas
+                int nuevoNOrdenActual = nOrden + 1;
+                int nuevoNOrdenSiguiente = nOrden;
+
+                // Actualizar ambas preguntas
+                bool resultado1 = FL.ActualizaNOrden(idPregunta, nuevoNOrdenActual);
+                bool resultado2 = FL.ActualizaNOrden(idPreguntaSiguiente, nuevoNOrdenSiguiente);
+
+                if (resultado1 && resultado2)
+                {
+                    return Json(new { success = true, message = "Pregunta movida hacia abajo correctamente." });
+                }
+                else
+                {
+                    return Json(new { success = false, message = "No se pudo mover la pregunta." });
+                }
+            }
+            catch (Exception ex)
+            {
+                return Json(new { success = false, message = "Error al mover la pregunta: " + ex.Message });
+            }
         }
     }
 }

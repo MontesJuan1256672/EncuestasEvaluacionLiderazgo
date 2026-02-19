@@ -19,11 +19,17 @@ namespace EncuestasEvaluacionLiderazgo.Controllers
         private readonly IRespuestaService _respuestaService;
         private readonly IHttpContextAccessor _httpContextAccessor;
 
+        /// <summary>
+        /// ID del tipo de evaluación (filtro) que se recibe como parámetro
+        /// </summary>
+        public string IdEncuesta { get; set; }
+
         public EncuestaController(IEncuestaService encuestaService, IRespuestaService respuestaService, IHttpContextAccessor httpContextAccessor)
         {
             _encuestaService = encuestaService;
             _respuestaService = respuestaService;
             _httpContextAccessor = httpContextAccessor;
+            IdEncuesta = string.Empty;
         }
 
         /// <summary>
@@ -59,6 +65,29 @@ namespace EncuestasEvaluacionLiderazgo.Controllers
         }
 
         /// <summary>
+        /// Obtiene las preguntas de un tipo de evaluación específico
+        /// </summary>
+        /// <param name="idEncuesta">ID del tipo de evaluación</param>
+        /// <returns>DataSet con las preguntas</returns>
+        private DataSet TraePreguntasII(string idEncuesta)
+        {
+            if (string.IsNullOrEmpty(idEncuesta))
+            {
+                return new DataSet();
+            }
+
+            try
+            {
+                return FL.TraePreguntasII(idEncuesta);
+            }
+            catch (Exception ex)
+            {
+                TempData["Error"] = $"Error al obtener preguntas: {ex.Message}";
+                return new DataSet();
+            }
+        }
+
+        /// <summary>
         /// GET: /Encuesta
         /// Muestra la lista de encuestas del usuario actual
         /// </summary>
@@ -70,6 +99,9 @@ namespace EncuestasEvaluacionLiderazgo.Controllers
 
             int userId = GetCurrentUserId();
             var encuestas = await _encuestaService.GetEncuestasAsync(userId);
+
+            // Obtener preguntas por tipo de evaluación
+            var preguntas = TraePreguntasII(IdEncuesta);
 
             // Crear instancia del IndexModel con métodos helper
             var indexModel = new Views.Encuesta.IndexModel(_httpContextAccessor);
@@ -107,6 +139,9 @@ namespace EncuestasEvaluacionLiderazgo.Controllers
             if (!IsAuthenticated())
                 return RedirectToAction("Login", "Auth");
 
+            // Asignar el filtro a IdEncuesta
+            IdEncuesta = FiltroTipoEvaluacion ?? string.Empty;
+
             try
             {
                 // Procesar según la acción recibida
@@ -124,6 +159,9 @@ namespace EncuestasEvaluacionLiderazgo.Controllers
                     default:
                         break;
                 }
+
+                // Obtener preguntas por tipo de evaluación
+                var preguntas = TraePreguntasII(IdEncuesta);
 
                 int userId = GetCurrentUserId();
                 var encuestas = await _encuestaService.GetEncuestasAsync(userId);
@@ -165,17 +203,26 @@ namespace EncuestasEvaluacionLiderazgo.Controllers
         /// Muestra los detalles de una encuesta para responder
         /// </summary>
         [HttpGet("Details/{id}")]
-        public async Task<IActionResult> Details(int id)
+        public async Task<IActionResult> Details(int id, string filtroTipo = "")
         {
             if (!IsAuthenticated())
                 return RedirectToAction("Login", "Auth");
+
+            // Asignar el filtroTipo a la propiedad IdEncuesta
+            IdEncuesta = filtroTipo ?? string.Empty;
 
             var encuesta = await _encuestaService.GetEncuestaByIdAsync(id);
 
             if (encuesta == null)
                 return NotFound();
 
-            return View(encuesta);
+            var viewModel = new EncuestaDetailsViewModel
+            {
+                Encuesta = encuesta,
+                FiltroTipo = filtroTipo ?? ""
+            };
+
+            return View(viewModel);
         }
 
         /// <summary>
@@ -184,10 +231,13 @@ namespace EncuestasEvaluacionLiderazgo.Controllers
         /// </summary>
         [HttpPost("Submit")]
         [ValidateAntiForgeryToken]
-        public async Task<IActionResult> Submit(int encuestaId, [FromForm] Dictionary<string, string> respuestas)
+        public async Task<IActionResult> Submit(int encuestaId, string filtroTipo = "", [FromForm] Dictionary<string, string> respuestas = null)
         {
             if (!IsAuthenticated())
                 return RedirectToAction("Login", "Auth");
+
+            // Asignar el filtroTipo a la propiedad IdEncuesta
+            IdEncuesta = filtroTipo ?? string.Empty;
 
             int userId = GetCurrentUserId();
             var respuesta = new Respuesta
@@ -202,10 +252,17 @@ namespace EncuestasEvaluacionLiderazgo.Controllers
             if (!success)
             {
                 TempData["Error"] = message;
-                return RedirectToAction("Details", new { id = encuestaId });
+                return RedirectToAction("Details", new { id = encuestaId, filtroTipo = filtroTipo });
             }
 
             TempData["Success"] = "Encuesta respondida correctamente.";
+
+            // Volver a Index con el filtro si se proporcionó
+            if (!string.IsNullOrEmpty(filtroTipo))
+            {
+                return RedirectToAction("Index", new { FiltroTipoEvaluacion = filtroTipo });
+            }
+
             return RedirectToAction("Index");
         }
 

@@ -1,9 +1,7 @@
-@model EncuestasEvaluacionLiderazgo.Models.Encuesta
-@using EncuestasEvaluacionLiderazgo.Views.Encuesta
+@model EncuestasEvaluacionLiderazgo.Models.EncuestaDetailsViewModel
 
 @{
-    ViewData["Title"] = @Model.Titulo;
-    var detailsModel = new DetailsModel();
+    ViewData["Title"] = @Model.Encuesta.Titulo;
 }
 
 <div class="max-w-4xl mx-auto py-8">
@@ -11,11 +9,11 @@
     <div class="bg-white rounded-lg shadow-md p-8 mb-8 border-l-4 border-blue-600">
         <div class="flex justify-between items-start mb-4">
             <div>
-                <h1 class="text-4xl font-bold text-gray-900 mb-2">@Model.Titulo</h1>
-                <p class="text-gray-600 text-lg">@Model.Descripcion</p>
+                <h1 class="text-4xl font-bold text-gray-900 mb-2">@(new EncuestasEvaluacionLiderazgo.Views.Encuesta.DetailsModel().GetTituloEncuesta(Model.FiltroTipo))</h1>
+                <p class="text-gray-600 text-lg">@Model.Encuesta.Descripcion</p>
             </div>
-            <span class="@detailsModel.GetEstadoClase(Model.Estado) text-sm font-bold px-4 py-2 rounded-full">
-                @detailsModel.GetEstadoTexto(Model.Estado)
+            <span class="@Model.GetEstadoClase(Model.Encuesta.Estado) text-sm font-bold px-4 py-2 rounded-full">
+                @Model.GetEstadoTexto(Model.Encuesta.Estado)
             </span>
         </div>
 
@@ -23,120 +21,47 @@
         <div class="grid grid-cols-2 md:grid-cols-4 gap-4 mt-6 pt-6 border-t">
             <div>
                 <p class="text-gray-600 text-sm">Creada el</p>
-                <p class="font-bold text-gray-900">@Model.FechaCreacion.ToString("dd/MM/yyyy")</p>
+                <p class="font-bold text-gray-900">@Model.Encuesta.FechaCreacion.ToString("dd/MM/yyyy")</p>
             </div>
             <div>
                 <p class="text-gray-600 text-sm">Vencimiento</p>
-                <p class="font-bold text-gray-900">@Model.FechaVencimiento.ToString("dd/MM/yyyy")</p>
+                <p class="font-bold text-gray-900">@Model.Encuesta.FechaVencimiento.ToString("dd/MM/yyyy")</p>
             </div>
             <div>
                 <p class="text-gray-600 text-sm">Preguntas</p>
-                <p class="font-bold text-gray-900">@Model.Preguntas?.Count ?? 0</p>
+                <p class="font-bold text-gray-900">@Model.Encuesta.Preguntas?.Count ?? 0</p>
             </div>
             <div>
                 <p class="text-gray-600 text-sm">Respuestas</p>
-                <p class="font-bold text-gray-900">@Model.Respuestas?.Count ?? 0</p>
+                <p class="font-bold text-gray-900">@Model.Encuesta.Respuestas?.Count ?? 0</p>
             </div>
         </div>
     </div>
 
     <!-- Formulario de Respuestas -->
-    @if (Model.Estado == EncuestasEvaluacionLiderazgo.Models.EstadoEncuesta.Publicada)
+    @if (Model.Encuesta.Estado == EncuestasEvaluacionLiderazgo.Models.EstadoEncuesta.Publicada)
     {
-        <form method="post" asp-controller="Encuesta" asp-action="Submit" asp-route-encuestaId="@Model.Id">
+        var detailsModel = new EncuestasEvaluacionLiderazgo.Views.Encuesta.DetailsModel();
+        var preguntasDataSet = detailsModel.ObtenerPreguntasDeBaseDatos(Model.FiltroTipo);
+        <form method="post" asp-action="Submit" asp-controller="Encuesta" asp-route-encuestaId="@Model.Encuesta.Id" asp-route-filtroTipo="@Model.FiltroTipo">
             <div class="space-y-8">
-                @if (Model.Preguntas != null && Model.Preguntas.Any())
+                @if (detailsModel.TienePreguntasEnDataSet(preguntasDataSet))
                 {
-                    @foreach (var pregunta in Model.Preguntas.OrderBy(p => p.Orden))
+                    @foreach (var filaPregunта in detailsModel.ObtenerFilasPreguntasOrdenadas(preguntasDataSet))
                     {
                         <div class="bg-white rounded-lg shadow-md p-8 border-l-4 border-gray-300">
                             <!-- Número y Título de la Pregunta -->
                             <div class="mb-6">
                                 <div class="flex items-start space-x-4">
                                     <span class="flex-shrink-0 inline-flex items-center justify-center h-8 w-8 rounded-full bg-blue-100 text-blue-600 font-bold">
-                                        @(Model.Preguntas.ToList().IndexOf(pregunta) + 1)
+                                        @detailsModel.ObtenerNumeroPregunta(filaPregunта)
                                     </span>
                                     <div class="flex-1">
                                         <h3 class="text-lg font-bold text-gray-900">
-                                            @pregunta.Texto
-                                            @if (pregunta.Requerida)
-                                            {
-                                                <span class="text-red-600 ml-1">*</span>
-                                            }
+                                            @detailsModel.ObtenerTextoPregunta(filaPregunта)
                                         </h3>
-                                        <p class="text-gray-500 text-sm mt-1">@detailsModel.GetTipoPreguntaTexto(pregunta.Tipo)</p>
                                     </div>
                                 </div>
-                            </div>
-
-                            <!-- Opciones de Respuesta según tipo -->
-                            <div class="ml-12">
-                                @switch (pregunta.Tipo)
-                                {
-                                    case EncuestasEvaluacionLiderazgo.Models.TipoPregunta.TextoCorto:
-                                        <input type="text" name="pregunta_@pregunta.Id" 
-                                               class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-                                               placeholder="Escribe tu respuesta aquí..." 
-                                               @(pregunta.Requerida ? "required" : "") />
-                                        break;
-
-                                    case EncuestasEvaluacionLiderazgo.Models.TipoPregunta.TextoLargo:
-                                        <textarea name="pregunta_@pregunta.Id" rows="4"
-                                                  class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-                                                  placeholder="Escribe tu respuesta aquí..."
-                                                  @(pregunta.Requerida ? "required" : "")></textarea>
-                                        break;
-
-                                    case EncuestasEvaluacionLiderazgo.Models.TipoPregunta.OpcionUnica:
-                                        <div class="space-y-3">
-                                            @if (pregunta.Opciones != null)
-                                            {
-                                                @foreach (var opcion in pregunta.Opciones.OrderBy(o => o.Orden))
-                                                {
-                                                    <label class="flex items-center p-3 border border-gray-200 rounded-lg hover:bg-blue-50 cursor-pointer transition">
-                                                        <input type="radio" name="pregunta_@pregunta.Id" value="@opcion.Id"
-                                                               class="h-4 w-4 text-blue-600"
-                                                               @(pregunta.Requerida ? "required" : "") />
-                                                        <span class="ml-3 text-gray-700">@opcion.Texto</span>
-                                                    </label>
-                                                }
-                                            }
-                                        </div>
-                                        break;
-
-                                    case EncuestasEvaluacionLiderazgo.Models.TipoPregunta.OpcionMultiple:
-                                        <div class="space-y-3">
-                                            @if (pregunta.Opciones != null)
-                                            {
-                                                @foreach (var opcion in pregunta.Opciones.OrderBy(o => o.Orden))
-                                                {
-                                                    <label class="flex items-center p-3 border border-gray-200 rounded-lg hover:bg-blue-50 cursor-pointer transition">
-                                                        <input type="checkbox" name="pregunta_@pregunta.Id" value="@opcion.Id"
-                                                               class="h-4 w-4 text-blue-600 rounded" />
-                                                        <span class="ml-3 text-gray-700">@opcion.Texto</span>
-                                                    </label>
-                                                }
-                                            }
-                                        </div>
-                                        break;
-
-                                    case EncuestasEvaluacionLiderazgo.Models.TipoPregunta.Escala:
-                                        <div class="flex space-x-2">
-                                            @for (int i = 1; i <= 5; i++)
-                                            {
-                                                <label class="flex flex-col items-center cursor-pointer group">
-                                                    <input type="radio" name="pregunta_@pregunta.Id" value="@i"
-                                                           class="h-4 w-4 text-blue-600"
-                                                           @(pregunta.Requerida ? "required" : "") />
-                                                    <span class="mt-2 text-2xl group-hover:scale-125 transition-transform">
-                                                        @detailsModel.GetEstrella(i)
-                                                    </span>
-                                                    <span class="text-xs text-gray-600 mt-1">@i</span>
-                                                </label>
-                                            }
-                                        </div>
-                                        break;
-                                }
                             </div>
                         </div>
                     }
@@ -165,7 +90,7 @@
         <!-- Encuesta no disponible -->
         <div class="bg-yellow-100 border-l-4 border-yellow-600 text-yellow-800 p-6 rounded-lg">
             <p class="font-bold text-lg">⚠️ Encuesta no disponible</p>
-            <p class="mt-2">Esta encuesta se encuentra en estado: <strong>@detailsModel.GetEstadoTexto(Model.Estado)</strong></p>
+            <p class="mt-2">Esta encuesta se encuentra en estado: <strong>@Model.GetEstadoTexto(Model.Encuesta.Estado)</strong></p>
             <p class="mt-2">Por favor contacta al administrador si crees que esto es un error.</p>
         </div>
     }

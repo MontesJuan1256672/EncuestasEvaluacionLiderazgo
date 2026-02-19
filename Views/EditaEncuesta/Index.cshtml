@@ -2,9 +2,10 @@
 
 @{
     ViewData["Title"] = "Editar Encuesta: " + Model.Titulo;
+    var indexModel = new EncuestasEvaluacionLiderazgo.Views.EditaEncuesta.IndexModel();
 }
 
-<div class="max-w-4xl mx-auto py-8">
+<div class="w-full mx-auto py-8">
     <!-- Encabezado -->
     <div class="mb-8">
         <h1 class="text-4xl font-bold text-gray-900 mb-2">Editar Encuesta</h1>
@@ -12,11 +13,11 @@
     </div>
 
     <!-- Información de Estado -->
-    <div class="mb-8 p-6 @GetEstadoBgClase(Model.Estado) rounded-lg">
+    <div class="mb-8 p-6 @indexModel.GetEstadoBgClase(Model.Estado) rounded-lg">
         <div class="flex justify-between items-center">
             <div>
                 <p class="text-sm opacity-75">Estado Actual</p>
-                <p class="text-lg font-bold">@GetEstadoTexto(Model.Estado)</p>
+                <p class="text-lg font-bold">@indexModel.GetEstadoTexto(Model.Estado)</p>
             </div>
             @if (Model.Estado == EncuestasEvaluacionLiderazgo.Models.EstadoEncuesta.Borrador)
             {
@@ -28,10 +29,25 @@
             }
             @if (Model.Estado != EncuestasEvaluacionLiderazgo.Models.EstadoEncuesta.Cerrada)
             {
-                <form method="post" asp-action="Delete" asp-route-id="@Model.Id" 
-                      onsubmit="return confirm('¿Estás seguro de que deseas eliminar esta encuesta? Esta acción no se puede deshacer.');">
-                    <button type="submit" class="bg-red-600 text-white px-6 py-2 rounded-lg hover:bg-red-700 transition font-bold">
-                        🗑️ Eliminar
+                <form method="post" asp-action="UpdateEstado" asp-route-filtroTipo="@(ViewBag.FiltroTipo ?? Model.Id.ToString())" asp-route-id="@Model.Id" class="inline">
+                    @{
+                        bool esActivo = indexModel.GetEstadoActivoEncuesta(ViewBag.FiltroTipo ?? "");
+                    }
+                    <select name="estado" class="px-4 py-2 border border-gray-300 rounded-lg hover:border-gray-400 transition font-bold">
+                        @if (esActivo)
+                        {
+                            <option value="true" selected>Activo</option>
+                            <option value="false">Baja</option>
+                        }
+                        else
+                        {
+                            <option value="true">Activo</option>
+                            <option value="false" selected>Baja</option>
+                        }
+                    </select>
+                    <button type="submit" class="bg-blue-600 text-white px-6 py-2 rounded-lg hover:bg-blue-700 transition font-bold"
+                            onclick="return confirm('¿Estás seguro de que deseas actualizar el estado de la encuesta?')">
+                        ✓ Actualizar
                     </button>
                 </form>
             }
@@ -46,21 +62,11 @@
                     ℹ️ Detalles
                 </button>
             </li>
-            <li class="mr-6">
-                <button type="button" class="py-2 px-1 border-b-2 border-transparent text-gray-700 hover:text-gray-900 inactive-tab" data-tab="preguntas">
-                    ❓ Preguntas (@(Model.Preguntas?.Count ?? 0))
-                </button>
-            </li>
-            <li class="mr-6">
-                <button type="button" class="py-2 px-1 border-b-2 border-transparent text-gray-700 hover:text-gray-900 inactive-tab" data-tab="respuestas">
-                    📊 Respuestas (@(Model.Respuestas?.Count ?? 0))
-                </button>
-            </li>
         </ul>
     </div>
 
     <!-- TAB 1: Detalles -->
-    <div id="tab-detalles" class="tab-content">
+    <div id="tab-detalles">
         <form method="post" asp-action="Update" class="bg-white rounded-lg shadow-md p-8 space-y-6">
             <!-- Validación General -->
             @if (!ViewData.ModelState.IsValid)
@@ -88,236 +94,510 @@
                 </label>
                 <input type="text" id="titulo" name="titulo" required
                        class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-                       value="@Model.Titulo"
-                       @(Model.Estado != EncuestasEvaluacionLiderazgo.Models.EstadoEncuesta.Borrador ? "disabled" : "") />
+                       value="@indexModel.GetTituloEncuesta(ViewBag.FiltroTipo ?? "")"
+                       @indexModel.GetAtributoDisabled(Model.Estado) />
             </div>
 
-            <!-- Descripción -->
+            <!-- Clave de acceso -->
+            <div class="flex gap-6">
+                <div class="flex-1">
+                    <label for="claveAcceso" class="block text-gray-700 font-bold mb-2">
+                        Clave de acceso
+                    </label>
+                    <input type="text" id="claveAcceso" name="claveAcceso"
+                           class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                           value="@indexModel.GetClaveAccesoEncuesta(ViewBag.FiltroTipo ?? "")" />
+                </div>
+            </div>
+
+            <!-- Botón Agregar Pregunta -->
             <div>
-                <label for="descripcion" class="block text-gray-700 font-bold mb-2">
-                    Descripción <span class="text-red-600">*</span>
-                </label>
-                <textarea id="descripcion" name="descripcion" required rows="4"
-                          class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-                          @(Model.Estado != EncuestasEvaluacionLiderazgo.Models.EstadoEncuesta.Borrador ? "disabled" : "")>@Model.Descripcion</textarea>
+                <button type="button" onclick="document.getElementById('modalAgregarPregunta').classList.remove('hidden')" class="w-full bg-blue-100 text-blue-600 py-3 rounded-lg hover:bg-blue-200 transition font-bold">
+                    ➕ Agregar Pregunta
+                </button>
             </div>
 
-            <!-- Fecha de Vencimiento -->
-            <div>
-                <label for="fechaVencimiento" class="block text-gray-700 font-bold mb-2">
-                    Fecha de Vencimiento <span class="text-red-600">*</span>
-                </label>
-                <input type="date" id="fechaVencimiento" name="fechaVencimiento" required
-                       class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-                       value="@Model.FechaVencimiento.ToString("yyyy-MM-dd")"
-                       @(Model.Estado != EncuestasEvaluacionLiderazgo.Models.EstadoEncuesta.Borrador ? "disabled" : "") />
-            </div>
-
-            <!-- Estado -->
-            <div class="bg-gray-100 p-4 rounded-lg">
-                <p class="text-gray-700"><strong>Estado:</strong> @GetEstadoTexto(Model.Estado)</p>
-                <p class="text-gray-600 text-sm mt-2">
-                    @if (Model.Estado == EncuestasEvaluacionLiderazgo.Models.EstadoEncuesta.Borrador)
-                    {
-                        <span>Aún estás en fase de edición. Publica cuando estés listo.</span>
-                    }
-                    else if (Model.Estado == EncuestasEvaluacionLiderazgo.Models.EstadoEncuesta.Publicada)
-                    {
-                        <span>Los participantes pueden responder esta encuesta.</span>
-                    }
-                    else
-                    {
-                        <span>Esta encuesta ya no acepta respuestas.</span>
-                    }
-                </p>
+            <!-- Tabla de Preguntas -->
+            <div class="mt-8">
+                <h3 class="text-xl font-bold text-gray-900 mb-4">Preguntas</h3>
+                @{
+                    var filasPreguntas = indexModel.ObtenerFilasPreguntasDeBaseDatos(ViewBag.FiltroTipo ?? "");
+                }
+                @if (filasPreguntas.Count > 0)
+                {
+                    <div class="overflow-x-auto">
+                        <table class="w-full border-collapse">
+                            <thead class="bg-gray-100">
+                                <tr>
+                                    <th class="border border-gray-300 px-4 py-3 text-left text-gray-700 font-bold">Número</th>
+                                    <th class="border border-gray-300 px-4 py-3 text-left text-gray-700 font-bold">Pregunta</th>
+                                    <th class="border border-gray-300 px-4 py-3 text-left text-gray-700 font-bold">Pregunta Inglés</th>
+                                    <th class="border border-gray-300 px-4 py-3 text-left text-gray-700 font-bold">Competencia</th>
+                                    <th class="border border-gray-300 px-4 py-3 text-left text-gray-700 font-bold">Actividad</th>
+                                    <th class="border border-gray-300 px-4 py-3 text-left text-gray-700 font-bold">Descripción Perfil</th>
+                                    <th class="border border-gray-300 px-4 py-3 text-center text-gray-700 font-bold">Opciones</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                @{
+                                    int numeroPreg = 1;
+                                    foreach (var fila in filasPreguntas)
+                                    {
+                                        <tr class="hover:bg-gray-50">
+                                            <td class="border border-gray-300 px-4 py-3 text-gray-900 hidden">@indexModel.ObtenerValorDataRow(fila, "IDPregunta")</td>
+                                            <td class="border border-gray-300 px-4 py-3 text-gray-900">@indexModel.ObtenerValorDataRow(fila, "nOrden")</td>
+                                            <td class="border border-gray-300 px-4 py-3 text-gray-900">@indexModel.ObtenerValorDataRow(fila, "cPregunta")</td>
+                                            <td class="border border-gray-300 px-4 py-3 text-gray-600">@indexModel.ObtenerValorDataRow(fila, "cPregunta_Ingles")</td>
+                                            <td class="border border-gray-300 px-4 py-3 text-gray-600">@indexModel.ObtenerValorDataRow(fila, "cCompetencia")</td>
+                                            <td class="border border-gray-300 px-4 py-3 text-gray-600">@indexModel.ObtenerValorDataRow(fila, "cActividad")</td>
+                                            <td class="border border-gray-300 px-4 py-3 text-gray-600">@indexModel.ObtenerValorDataRow(fila, "cDescripcion")</td>
+                                            <td class="border border-gray-300 px-4 py-3 text-center">
+                                                <div class="flex justify-center space-x-2">
+                                                    <button type="button" class="text-green-600 hover:text-green-800 text-lg" onclick="moverPreguntaArriba(this)">⬆️</button>
+                                                    <button type="button" class="text-green-600 hover:text-green-800 text-lg" onclick="moverPreguntaAbajo(this)">⬇️</button>
+                                                    <button type="button" class="text-blue-600 hover:text-blue-800 text-lg edit-btn" onclick="abrirModalEditar(this)">✏️</button>
+                                                    <button type="button" class="text-red-600 hover:text-red-800 text-lg delete-btn" onclick="eliminarPregunta(this)">🗑️</button>
+                                                </div>
+                                            </td>
+                                        </tr>
+                                        numeroPreg++;
+                                    }
+                                }
+                            </tbody>
+                        </table>
+                    </div>
+                }
+                else
+                {
+                    <div class="text-center py-8 bg-gray-100 rounded-lg">
+                        <p class="text-gray-600">No hay preguntas en esta encuesta</p>
+                        <button type="button" class="mt-4 bg-blue-600 text-white px-6 py-2 rounded-lg hover:bg-blue-700 transition font-bold">
+                            ➕ Crear Primera Pregunta
+                        </button>
+                    </div>
+                }
             </div>
 
             <!-- Botones -->
-            @if (Model.Estado == EncuestasEvaluacionLiderazgo.Models.EstadoEncuesta.Borrador)
-            {
-                <div class="flex space-x-4">
-                    <button type="submit" class="flex-1 bg-blue-600 text-white py-3 rounded-lg hover:bg-blue-700 transition font-bold">
-                        ✓ Guardar Cambios
-                    </button>
-                    <a href="javascript:history.back()" class="flex-1 bg-gray-300 text-gray-800 py-3 rounded-lg hover:bg-gray-400 transition font-bold text-center">
-                        ← Cancelar
-                    </a>
-                </div>
-            }
+            <div class="flex space-x-4 mt-8">
+                <button type="submit" class="flex-1 bg-blue-600 text-white py-3 rounded-lg hover:bg-blue-700 transition font-bold">
+                    ✓ Guardar Cambios
+                </button>
+                <a asp-controller="Encuesta" asp-action="Index" asp-route-filtroTipo="@ViewBag.FiltroTipo" class="flex-1 bg-gray-300 text-gray-800 py-3 rounded-lg hover:bg-gray-400 transition font-bold text-center">
+                    ← Cancelar
+                </a>
+            </div>
         </form>
     </div>
 
-    <!-- TAB 2: Preguntas -->
-    <div id="tab-preguntas" class="tab-content hidden">
-        <div class="bg-white rounded-lg shadow-md p-8">
-            @if (Model.Preguntas != null && Model.Preguntas.Any())
-            {
-                <div class="space-y-6">
-                    @foreach (var pregunta in Model.Preguntas.OrderBy(p => p.Orden))
-                    {
-                        <div class="border border-gray-300 rounded-lg p-6 hover:border-blue-500 transition">
-                            <div class="flex justify-between items-start mb-4">
-                                <div class="flex-1">
-                                    <h4 class="text-lg font-bold text-gray-900">@pregunta.Texto</h4>
-                                    <p class="text-gray-600 text-sm mt-1">
-                                        @GetTipoPreguntaTexto(pregunta.Tipo)
-                                        @if (pregunta.Requerida)
-                                        {
-                                            <span class="ml-2 text-red-600 font-bold">Requerida</span>
-                                        }
-                                    </p>
-                                </div>
-                                <div class="flex space-x-2">
-                                    <button type="button" class="text-blue-600 hover:text-blue-800">✏️</button>
-                                    <button type="button" class="text-red-600 hover:text-red-800">🗑️</button>
-                                </div>
-                            </div>
+    <!-- Modal Agregar Pregunta -->
+    <div id="modalAgregarPregunta" class="hidden fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+        <div class="bg-white rounded-lg shadow-lg p-8 w-full max-w-2xl max-h-screen overflow-y-auto">
+            <div class="flex justify-between items-center mb-6">
+                <h2 class="text-2xl font-bold text-gray-900">Agregar Nueva Pregunta</h2>
+                <button type="button" onclick="document.getElementById('modalAgregarPregunta').classList.add('hidden')" class="text-gray-500 hover:text-gray-700 text-2xl">
+                    ✕
+                </button>
+            </div>
 
-                            @if (pregunta.Opciones != null && pregunta.Opciones.Any())
-                            {
-                                <div class="mt-4 pl-4 border-l-2 border-gray-300">
-                                    <p class="text-gray-700 font-semibold mb-2">Opciones:</p>
-                                    <ul class="space-y-1">
-                                        @foreach (var opcion in pregunta.Opciones.OrderBy(o => o.Orden))
-                                        {
-                                            <li class="text-gray-600">• @opcion.Texto</li>
-                                        }
-                                    </ul>
-                                </div>
-                            }
-                        </div>
-                    }
+            <form id="formAgregarPregunta" method="post" asp-action="CreatePregunta" asp-route-filtroTipo="@(ViewBag.FiltroTipo ?? "")" class="space-y-4">
+                <input type="hidden" name="encuestaId" value="@Model.Id" />
+
+                <!-- Pregunta en Español -->
+                <div>
+                    <label for="cPregunta" class="block text-gray-700 font-bold mb-2">
+                        Pregunta (Español) <span class="text-red-600">*</span>
+                    </label>
+                    <input type="text" id="cPregunta" name="cPregunta" required maxlength="500"
+                           class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                           placeholder="Ingrese la pregunta en español" />
                 </div>
 
-                <button type="button" class="mt-6 w-full bg-blue-100 text-blue-600 py-3 rounded-lg hover:bg-blue-200 transition font-bold">
-                    ➕ Agregar Pregunta
-                </button>
-            }
-            else
-            {
-                <div class="text-center py-12">
-                    <div class="text-6xl mb-4 opacity-50">❓</div>
-                    <p class="text-gray-600 text-lg">No hay preguntas en esta encuesta</p>
-                    <button type="button" class="mt-6 bg-blue-600 text-white px-6 py-2 rounded-lg hover:bg-blue-700 transition font-bold">
-                        ➕ Crear Primera Pregunta
+                <!-- Pregunta en Inglés -->
+                <div>
+                    <label for="cPregunta_Ingles" class="block text-gray-700 font-bold mb-2">
+                        Pregunta (Inglés) <span class="text-red-600">*</span>
+                    </label>
+                    <input type="text" id="cPregunta_Ingles" name="cPregunta_Ingles" required maxlength="500"
+                           class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                           placeholder="Enter the question in English" />
+                </div>
+
+                <!-- Competencia -->
+                <div>
+                    <label for="cCompetencia" class="block text-gray-700 font-bold mb-2">
+                        Competencia <span class="text-red-600">*</span>
+                    </label>
+                    <select id="cCompetencia" name="cCompetencia" required
+                           class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500">
+                        <option value="">-- Seleccione una competencia --</option>
+                        @{
+                            var competencias = indexModel.ObtenerCompetencias();
+                            foreach (var competencia in competencias)
+                            {
+                                <option value="@competencia.Value">@competencia.Key</option>
+                            }
+                        }
+                    </select>
+                </div>
+
+                <!-- Actividad -->
+                <div>
+                    <label for="cActividad" class="block text-gray-700 font-bold mb-2">
+                        Actividad <span class="text-red-600">*</span>
+                    </label>
+                    <select id="cActividad" name="cActividad" required
+                           class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500">
+                        <option value="">-- Seleccione una actividad --</option>
+                        @{
+                            var actividades = indexModel.ObtenerActividades();
+                            foreach (var actividad in actividades)
+                            {
+                                <option value="@actividad.Value">@actividad.Key</option>
+                            }
+                        }
+                    </select>
+                </div>
+
+                <!-- Descripción -->
+                <div>
+                    <label for="cDescripcion" class="block text-gray-700 font-bold mb-2">
+                        Descripción del Perfil <span class="text-red-600">*</span>
+                    </label>
+                    <select id="cDescripcion" name="cDescripcion" required
+                           class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500">
+                        <option value="">-- Seleccione una descripción --</option>
+                        @{
+                            var descripciones = indexModel.ObtenerDescripciones();
+                            foreach (var descripcion in descripciones)
+                            {
+                                <option value="@descripcion.Value">@descripcion.Key</option>
+                            }
+                        }
+                    </select>
+                </div>
+
+                <!-- Orden (número de pregunta) -->
+                <div>
+                    <label for="nOrden" class="block text-gray-700 font-bold mb-2">
+                        Número de Orden <span class="text-red-600">*</span>
+                    </label>
+                    <input type="number" id="nOrden" name="nOrden" required min="1" max="999" readonly
+                           class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 bg-gray-100 cursor-not-allowed"
+                           value="@indexModel.ObtenerProximoNumeroOrden(ViewBag.FiltroTipo ?? "")"
+                           placeholder="Ej: 1" />
+                </div>
+
+                <!-- Botones de acción -->
+                <div class="flex gap-4 pt-4 border-t border-gray-200">
+                    <button type="submit" class="flex-1 bg-green-600 text-white px-6 py-2 rounded-lg hover:bg-green-700 transition font-bold">
+                        💾 Guardar Pregunta
+                    </button>
+                    <button type="button" onclick="document.getElementById('modalAgregarPregunta').classList.add('hidden')" class="flex-1 bg-gray-500 text-white px-6 py-2 rounded-lg hover:bg-gray-600 transition font-bold">
+                        ✕ Cancelar
                     </button>
                 </div>
-            }
+            </form>
         </div>
     </div>
 
-    <!-- TAB 3: Respuestas -->
-    <div id="tab-respuestas" class="tab-content hidden">
-        <div class="bg-white rounded-lg shadow-md p-8">
-            @if (Model.Respuestas != null && Model.Respuestas.Any())
-            {
-                <div class="overflow-x-auto">
-                    <table class="w-full">
-                        <thead class="bg-gray-100">
-                            <tr>
-                                <th class="px-4 py-3 text-left text-gray-700 font-bold">Participante</th>
-                                <th class="px-4 py-3 text-left text-gray-700 font-bold">Fecha de Respuesta</th>
-                                <th class="px-4 py-3 text-left text-gray-700 font-bold">Estado</th>
-                                <th class="px-4 py-3 text-left text-gray-700 font-bold">Acciones</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            @foreach (var respuesta in Model.Respuestas)
+    <!-- Modal Editar Pregunta -->
+    <div id="modalEditarPregunta" class="hidden fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+        <div class="bg-white rounded-lg shadow-lg p-8 w-full max-w-2xl max-h-screen overflow-y-auto">
+            <div class="flex justify-between items-center mb-6">
+                <h2 class="text-2xl font-bold text-gray-900">Editar Pregunta</h2>
+                <button type="button" onclick="document.getElementById('modalEditarPregunta').classList.add('hidden')" class="text-gray-500 hover:text-gray-700 text-2xl">
+                    ✕
+                </button>
+            </div>
+
+            <form id="formEditarPregunta" method="post" asp-action="UpdatePregunta" asp-route-filtroTipo="@(ViewBag.FiltroTipo ?? "")" class="space-y-4">
+                <input type="hidden" id="editIDPregunta" name="idPregunta" />
+                <input type="hidden" name="encuestaId" value="@Model.Id" />
+
+                <!-- Pregunta en Español -->
+                <div>
+                    <label for="editCPregunta" class="block text-gray-700 font-bold mb-2">
+                        Pregunta (Español) <span class="text-red-600">*</span>
+                    </label>
+                    <input type="text" id="editCPregunta" name="cPregunta" required maxlength="500"
+                           class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                           placeholder="Ingrese la pregunta en español" />
+                </div>
+
+                <!-- Pregunta en Inglés -->
+                <div>
+                    <label for="editCPreguntaIngles" class="block text-gray-700 font-bold mb-2">
+                        Pregunta (Inglés) <span class="text-red-600">*</span>
+                    </label>
+                    <input type="text" id="editCPreguntaIngles" name="cPregunta_Ingles" required maxlength="500"
+                           class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                           placeholder="Enter the question in English" />
+                </div>
+
+                <!-- Competencia -->
+                <div>
+                    <label for="editCCompetencia" class="block text-gray-700 font-bold mb-2">
+                        Competencia <span class="text-red-600">*</span>
+                    </label>
+                    <select id="editCCompetencia" name="cCompetencia" required
+                           class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500">
+                        <option value="">-- Seleccione una competencia --</option>
+                        @{
+                            var competenciasEdit = indexModel.ObtenerCompetencias();
+                            foreach (var competencia in competenciasEdit)
                             {
-                                <tr class="border-b hover:bg-gray-50">
-                                    <td class="px-4 py-3 text-gray-900">@respuesta.Usuario?.Nombre</td>
-                                    <td class="px-4 py-3 text-gray-600">@respuesta.FechaRespuesta.ToString("dd/MM/yyyy HH:mm")</td>
-                                    <td class="px-4 py-3">
-                                        <span class="@(respuesta.Completada ? "bg-green-100 text-green-800" : "bg-yellow-100 text-yellow-800") px-3 py-1 rounded-full text-sm font-bold">
-                                            @(respuesta.Completada ? "Completada" : "En progreso")
-                                        </span>
-                                    </td>
-                                    <td class="px-4 py-3">
-                                        <a href="#" class="text-blue-600 hover:underline">Ver detalle</a>
-                                    </td>
-                                </tr>
+                                <option value="@competencia.Value">@competencia.Key</option>
                             }
-                        </tbody>
-                    </table>
+                        }
+                    </select>
                 </div>
-            }
-            else
-            {
-                <div class="text-center py-12">
-                    <div class="text-6xl mb-4 opacity-50">📊</div>
-                    <p class="text-gray-600 text-lg">No hay respuestas aún</p>
-                    <p class="text-gray-500 mt-2">Los participantes verán respuestas aquí cuando completen la encuesta</p>
+
+                <!-- Actividad -->
+                <div>
+                    <label for="editCActividad" class="block text-gray-700 font-bold mb-2">
+                        Actividad <span class="text-red-600">*</span>
+                    </label>
+                    <select id="editCActividad" name="cActividad" required
+                           class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500">
+                        <option value="">-- Seleccione una actividad --</option>
+                        @{
+                            var actividadesEdit = indexModel.ObtenerActividades();
+                            foreach (var actividad in actividadesEdit)
+                            {
+                                <option value="@actividad.Value">@actividad.Key</option>
+                            }
+                        }
+                    </select>
                 </div>
-            }
+
+                <!-- Descripción -->
+                <div>
+                    <label for="editCDescripcion" class="block text-gray-700 font-bold mb-2">
+                        Descripción del Perfil <span class="text-red-600">*</span>
+                    </label>
+                    <select id="editCDescripcion" name="cDescripcion" required
+                           class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500">
+                        <option value="">-- Seleccione una descripción --</option>
+                        @{
+                            var descripcionesEdit = indexModel.ObtenerDescripciones();
+                            foreach (var descripcion in descripcionesEdit)
+                            {
+                                <option value="@descripcion.Value">@descripcion.Key</option>
+                            }
+                        }
+                    </select>
+                </div>
+
+                <!-- Orden (número de pregunta) -->
+                <div>
+                    <label for="editNOrden" class="block text-gray-700 font-bold mb-2">
+                        Número de Orden <span class="text-red-600">*</span>
+                    </label>
+                    <input type="number" id="editNOrden" name="nOrden" required min="1" max="999" readonly
+                           class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 bg-gray-100 cursor-not-allowed"
+                           placeholder="Ej: 1" />
+                </div>
+
+                <!-- Botones de acción -->
+                <div class="flex gap-4 pt-4 border-t border-gray-200">
+                    <button type="submit" class="flex-1 bg-blue-600 text-white px-6 py-2 rounded-lg hover:bg-blue-700 transition font-bold">
+                        💾 Guardar Cambios
+                    </button>
+                    <button type="button" onclick="document.getElementById('modalEditarPregunta').classList.add('hidden')" class="flex-1 bg-gray-500 text-white px-6 py-2 rounded-lg hover:bg-gray-600 transition font-bold">
+                        ✕ Cancelar
+                    </button>
+                </div>
+            </form>
         </div>
     </div>
 </div>
 
 @section Scripts {
     <script>
-        // Cambio de tabs
-        document.querySelectorAll('.active-tab, .inactive-tab').forEach(button => {
-            button.addEventListener('click', function() {
-                const tab = this.getAttribute('data-tab');
-                
-                // Ocultar todos los tabs
-                document.querySelectorAll('.tab-content').forEach(content => {
-                    content.classList.add('hidden');
-                });
-                
-                // Mostrar tab seleccionado
-                document.getElementById('tab-' + tab).classList.remove('hidden');
-                
-                // Actualizar estilos de botones
-                document.querySelectorAll('.active-tab, .inactive-tab').forEach(btn => {
-                    if (btn.getAttribute('data-tab') === tab) {
-                        btn.classList.remove('inactive-tab', 'border-transparent', 'text-gray-700');
-                        btn.classList.add('active-tab', 'border-blue-500', 'text-blue-600');
-                    } else {
-                        btn.classList.remove('active-tab', 'border-blue-500', 'text-blue-600');
-                        btn.classList.add('inactive-tab', 'border-transparent', 'text-gray-700');
-                    }
-                });
+        function abrirModalEditar(button) {
+            // Obtener la fila actual
+            const fila = button.closest('tr');
+            
+            // Obtener los datos de las celdas
+            const celdas = fila.querySelectorAll('td');
+            
+            // Obtener el IDPregunta (primera celda oculta - índice 0)
+            const idPregunta = celdas[0].textContent.trim();
+            
+            // Obtener el resto de datos
+            const nOrden = celdas[1].textContent.trim();
+            const cPregunta = celdas[2].textContent.trim();
+            const cPreguntaIngles = celdas[3].textContent.trim();
+            const cCompetencia = celdas[4].textContent.trim();
+            const cActividad = celdas[5].textContent.trim();
+            const cDescripcion = celdas[6].textContent.trim();
+            
+            // Llenar el formulario del modal de edición
+            document.getElementById('editIDPregunta').value = idPregunta;
+            document.getElementById('editCPregunta').value = cPregunta;
+            document.getElementById('editCPreguntaIngles').value = cPreguntaIngles;
+            document.getElementById('editNOrden').value = nOrden;
+            
+            // Opcional: Establecer los selects si necesitas pre-seleccionar valores
+            // document.getElementById('editCCompetencia').value = cCompetencia;
+            // document.getElementById('editCActividad').value = cActividad;
+            // document.getElementById('editCDescripcion').value = cDescripcion;
+            
+            console.log('IDPregunta:', idPregunta); // Para debugging
+            
+            // Mostrar el modal
+            document.getElementById('modalEditarPregunta').classList.remove('hidden');
+        }
+
+        function eliminarPregunta(button) {
+            // Obtener la fila actual
+            const fila = button.closest('tr');
+            
+            // Obtener los datos de las celdas
+            const celdas = fila.querySelectorAll('td');
+            
+            // Obtener el IDPregunta (primera celda oculta - índice 0)
+            const idPregunta = parseInt(celdas[0].textContent.trim());
+            
+            // Confirmar la eliminación
+            if (!confirm('¿Estás seguro de que deseas eliminar esta pregunta?')) {
+                return;
+            }
+
+            // Obtener los datos necesarios para la solicitud
+            const encuestaId = @Model.Id;
+            const filtroTipo = '@ViewBag.FiltroTipo';
+
+            // Realizar la solicitud AJAX para desactivar la pregunta
+            fetch(`/EditaEncuesta/DeletePregunta?idPregunta=${idPregunta}`, {
+                method: 'POST',
+                headers: {
+                    'X-Requested-With': 'XMLHttpRequest'
+                }
+            })
+            .then(response => {
+                if (response.ok) {
+                    return response.json();
+                }
+                throw new Error('Error en la solicitud');
+            })
+            .then(data => {
+                if (data.success) {
+                    // Remover la fila de la tabla
+                    fila.remove();
+                    alert('Pregunta eliminada correctamente.');
+                    // Recargar la página para actualizar la vista
+                    location.reload();
+                } else {
+                    alert('Error: ' + (data.message || 'No se pudo eliminar la pregunta.'));
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                alert('Error al eliminar la pregunta: ' + error.message);
             });
-        });
+        }
+
+        function moverPreguntaArriba(button) {
+            // Obtener la fila actual
+            const fila = button.closest('tr');
+            
+            // Obtener la fila anterior
+            const filaAnterior = fila.previousElementSibling;
+            
+            // Validar que exista una fila anterior
+            if (!filaAnterior) {
+                alert('No se puede mover la pregunta hacia arriba.');
+                return;
+            }
+            
+            // Obtener los datos de las celdas de la fila actual
+            const celdas = fila.querySelectorAll('td');
+            const idPregunta = parseInt(celdas[0].textContent.trim());
+            const nOrden = parseInt(celdas[1].textContent.trim());
+            
+            // Obtener el IDPregunta de la fila anterior (primera celda oculta)
+            const celdasAnterior = filaAnterior.querySelectorAll('td');
+            const idPreguntaAnterior = parseInt(celdasAnterior[0].textContent.trim());
+            
+            // Realizar la solicitud AJAX para mover la pregunta hacia arriba
+            fetch(`/EditaEncuesta/MoverPreguntaArriba?idPregunta=${idPregunta}&nOrden=${nOrden}&idPreguntaAnterior=${idPreguntaAnterior}`, {
+                method: 'POST',
+                headers: {
+                    'X-Requested-With': 'XMLHttpRequest'
+                }
+            })
+            .then(response => {
+                if (response.ok) {
+                    return response.json();
+                }
+                throw new Error('Error en la solicitud');
+            })
+            .then(data => {
+                if (data.success) {
+                    // Recargar la página para actualizar la vista
+                    location.reload();
+                } else {
+                    alert('Error: ' + (data.message || 'No se pudo mover la pregunta.'));
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                alert('Error al mover la pregunta: ' + error.message);
+            });
+        }
+
+        function moverPreguntaAbajo(button) {
+            // Obtener la fila actual
+            const fila = button.closest('tr');
+            
+            // Obtener la fila siguiente
+            const filaSiguiente = fila.nextElementSibling;
+            
+            // Validar que exista una fila siguiente
+            if (!filaSiguiente) {
+                alert('No se puede mover la pregunta hacia abajo.');
+                return;
+            }
+            
+            // Obtener los datos de las celdas de la fila actual
+            const celdas = fila.querySelectorAll('td');
+            const idPregunta = parseInt(celdas[0].textContent.trim());
+            const nOrden = parseInt(celdas[1].textContent.trim());
+            
+            // Obtener el IDPregunta de la fila siguiente (primera celda oculta)
+            const celdasSiguiente = filaSiguiente.querySelectorAll('td');
+            const idPreguntaSiguiente = parseInt(celdasSiguiente[0].textContent.trim());
+            
+            // Realizar la solicitud AJAX para mover la pregunta hacia abajo
+            fetch(`/EditaEncuesta/MoverPreguntaAbajo?idPregunta=${idPregunta}&nOrden=${nOrden}&idPreguntaSiguiente=${idPreguntaSiguiente}`, {
+                method: 'POST',
+                headers: {
+                    'X-Requested-With': 'XMLHttpRequest'
+                }
+            })
+            .then(response => {
+                if (response.ok) {
+                    return response.json();
+                }
+                throw new Error('Error en la solicitud');
+            })
+            .then(data => {
+                if (data.success) {
+                    // Recargar la página para actualizar la vista
+                    location.reload();
+                } else {
+                    alert('Error: ' + (data.message || 'No se pudo mover la pregunta.'));
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                alert('Error al mover la pregunta: ' + error.message);
+            });
+        }
     </script>
 }
 
-@functions {
-    private string GetEstadoTexto(EncuestasEvaluacionLiderazgo.Models.EstadoEncuesta estado)
-    {
-        return estado switch
-        {
-            EncuestasEvaluacionLiderazgo.Models.EstadoEncuesta.Borrador => "Borrador",
-            EncuestasEvaluacionLiderazgo.Models.EstadoEncuesta.Publicada => "Publicada",
-            EncuestasEvaluacionLiderazgo.Models.EstadoEncuesta.Cerrada => "Cerrada",
-            EncuestasEvaluacionLiderazgo.Models.EstadoEncuesta.Archivada => "Archivada",
-            _ => "Desconocido"
-        };
-    }
 
-    private string GetEstadoBgClase(EncuestasEvaluacionLiderazgo.Models.EstadoEncuesta estado)
-    {
-        return estado switch
-        {
-            EncuestasEvaluacionLiderazgo.Models.EstadoEncuesta.Borrador => "bg-gray-100 text-gray-800",
-            EncuestasEvaluacionLiderazgo.Models.EstadoEncuesta.Publicada => "bg-green-100 text-green-800",
-            EncuestasEvaluacionLiderazgo.Models.EstadoEncuesta.Cerrada => "bg-orange-100 text-orange-800",
-            EncuestasEvaluacionLiderazgo.Models.EstadoEncuesta.Archivada => "bg-blue-100 text-blue-800",
-            _ => "bg-gray-100 text-gray-800"
-        };
-    }
 
-    private string GetTipoPreguntaTexto(EncuestasEvaluacionLiderazgo.Models.TipoPregunta tipo)
-    {
-        return tipo switch
-        {
-            EncuestasEvaluacionLiderazgo.Models.TipoPregunta.TextoCorto => "Texto corto",
-            EncuestasEvaluacionLiderazgo.Models.TipoPregunta.TextoLargo => "Párrafo",
-            EncuestasEvaluacionLiderazgo.Models.TipoPregunta.OpcionUnica => "Opción única",
-            EncuestasEvaluacionLiderazgo.Models.TipoPregunta.OpcionMultiple => "Opciones múltiples",
-            EncuestasEvaluacionLiderazgo.Models.TipoPregunta.Escala => "Escala",
-            _ => "Desconocido"
-        };
-    }
-}
