@@ -709,5 +709,44 @@ namespace EncuestasEvaluacionLiderazgo.Data
             }
         }
 
+        /// <summary>
+        /// Actualiza la clave de acceso de una encuesta en la base de datos
+        /// </summary>
+        /// <param name="idTipoEvaluacion">ID del tipo de evaluación</param>
+        /// <param name="cClaveAcceso">Nueva clave de acceso</param>
+        /// <returns>True si la actualización fue exitosa, False en caso contrario</returns>
+        public static bool ActualizaClaveAcceso(string idTipoEvaluacion, string cClaveAcceso)
+        {
+            SqlConnection SqlCon = null;
+            try
+            {
+                SqlCon = new SqlConnection(GetConEvaluaLiderazgo());
+                SqlCon.Open();
+                
+                using (SqlCommand cmd = new SqlCommand("sp_ActualizaClaveEncuesta", SqlCon))
+                {
+                    cmd.CommandType = CommandType.StoredProcedure;
+                    cmd.Parameters.Add("@IdTipoEvaluacion", SqlDbType.VarChar).Value = idTipoEvaluacion;
+                    cmd.Parameters.Add("@cClaveAcceso", SqlDbType.VarChar).Value = cClaveAcceso;
+                    
+                    cmd.CommandTimeout = 0;
+                    cmd.ExecuteNonQuery();
+                    
+                    return true;
+                }
+            }
+            catch (Exception ex)
+            {
+                throw ex;
+            }
+            finally
+            {
+                if (SqlCon != null && SqlCon.State == ConnectionState.Open)
+                    SqlCon.Close();
+                SqlCon?.Dispose();
+                GC.Collect();
+            }
+        }
+
     }
 }

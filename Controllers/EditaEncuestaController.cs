@@ -471,5 +471,47 @@ namespace EncuestasEvaluacionLiderazgo.Controllers
                 return Json(new { success = false, message = "Error al mover la pregunta: " + ex.Message });
             }
         }
+
+        /// <summary>
+        /// Actualiza la clave de acceso de una encuesta
+        /// </summary>
+        [HttpPost]
+        [Route("ActualizaClaveAcceso")]
+        public IActionResult ActualizaClaveAcceso(int filtroTipo, string cClaveAcceso)
+        {
+            if (!IsAuthenticated())
+                return Unauthorized(new { success = false, message = "No autenticado" });
+
+            try
+            {
+                // Validar parámetros
+                if (filtroTipo <= 0)
+                {
+                    return Json(new { success = false, message = "ID de tipo de evaluación inválido." });
+                }
+
+                if (string.IsNullOrWhiteSpace(cClaveAcceso))
+                {
+                    return Json(new { success = false, message = "La clave de acceso no puede estar vacía." });
+                }
+
+                // Llamar al método FL para actualizar la clave de acceso
+                bool resultado = FL.ActualizaClaveAcceso(filtroTipo.ToString(), cClaveAcceso);
+
+                if (resultado)
+                {
+                    return Json(new { success = true, message = "Clave de acceso actualizada correctamente." });
+                }
+                else
+                {
+                    return Json(new { success = false, message = "No se pudo actualizar la clave de acceso." });
+                }
+            }
+            catch (Exception ex)
+            {
+                return Json(new { success = false, message = "Error al actualizar la clave de acceso: " + ex.Message });
+            }
+        }
+    
     }
 }

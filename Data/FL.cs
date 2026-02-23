@@ -441,5 +441,35 @@ namespace EncuestasEvaluacionLiderazgo.Data
                 throw new Exception("Error al actualizar el número de orden: " + ex.Message);
             }
         }
+
+        /// <summary>
+        /// Actualiza la clave de acceso de una encuesta
+        /// </summary>
+        /// <param name="idTipoEvaluacion">ID del tipo de evaluación</param>
+        /// <param name="cClaveAcceso">Nueva clave de acceso</param>
+        /// <returns>True si la actualización fue exitosa, False en caso contrario</returns>
+        public static bool ActualizaClaveAcceso(string idTipoEvaluacion, string cClaveAcceso)
+        {
+            try
+            {
+                // Validar parámetros
+                if (string.IsNullOrWhiteSpace(idTipoEvaluacion))
+                {
+                    throw new Exception("El ID del tipo de evaluación no puede estar vacío.");
+                }
+
+                if (string.IsNullOrWhiteSpace(cClaveAcceso))
+                {
+                    throw new Exception("La clave de acceso no puede estar vacía.");
+                }
+
+                // Llamar al método DL para actualizar la clave de acceso
+                return DL.ActualizaClaveAcceso(idTipoEvaluacion, cClaveAcceso);
+            }
+            catch (Exception ex)
+            {
+                throw new Exception("Error al actualizar la clave de acceso: " + ex.Message);
+            }
+        }
     }
 }

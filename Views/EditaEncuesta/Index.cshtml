@@ -104,9 +104,14 @@
                     <label for="claveAcceso" class="block text-gray-700 font-bold mb-2">
                         Clave de acceso
                     </label>
-                    <input type="text" id="claveAcceso" name="claveAcceso"
-                           class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-                           value="@indexModel.GetClaveAccesoEncuesta(ViewBag.FiltroTipo ?? "")" />
+                    <div class="flex gap-2">
+                        <input type="text" id="claveAcceso" name="claveAcceso"
+                               class="px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                               value="@indexModel.GetClaveAccesoEncuesta(ViewBag.FiltroTipo ?? "")" />
+                        <button type="button" class="bg-blue-600 text-white px-3 py-2 rounded-lg hover:bg-blue-700 transition font-bold text-sm whitespace-nowrap" onclick="ActualizaClaveAcceso(this)">
+                            ✓ Actualizar
+                        </button>
+                    </div>
                 </div>
             </div>
 
@@ -180,10 +185,8 @@
 
             <!-- Botones -->
             <div class="flex space-x-4 mt-8">
-                <button type="submit" class="flex-1 bg-blue-600 text-white py-3 rounded-lg hover:bg-blue-700 transition font-bold">
-                    ✓ Guardar Cambios
-                </button>
-                <a asp-controller="Encuesta" asp-action="Index" asp-route-filtroTipo="@ViewBag.FiltroTipo" class="flex-1 bg-gray-300 text-gray-800 py-3 rounded-lg hover:bg-gray-400 transition font-bold text-center">
+
+                <a asp-controller="Encuesta" asp-action="Index" asp-route-filtroTipo="@ViewBag.FiltroTipo" class="bg-gray-300 text-gray-800 px-6 py-3 rounded-lg hover:bg-gray-400 transition font-bold">
                     ← Cancelar
                 </a>
             </div>
@@ -594,6 +597,46 @@
             .catch(error => {
                 console.error('Error:', error);
                 alert('Error al mover la pregunta: ' + error.message);
+            });
+        }
+
+        function ActualizaClaveAcceso(button) {
+            // Obtener el valor de la clave de acceso
+            const cClaveAcceso = document.getElementById('claveAcceso').value;
+            
+            // Validar que la clave no esté vacía
+            if (!cClaveAcceso || cClaveAcceso.trim() === '') {
+                alert('La clave de acceso no puede estar vacía.');
+                return;
+            }
+            
+            // Obtener el filtroTipo (idTipoEvaluacion)
+            const filtroTipo = '@ViewBag.FiltroTipo';
+            
+            // Realizar la solicitud AJAX para actualizar la clave de acceso
+            fetch(`/EditaEncuesta/ActualizaClaveAcceso?filtroTipo=${filtroTipo}&cClaveAcceso=${encodeURIComponent(cClaveAcceso)}`, {
+                method: 'POST',
+                headers: {
+                    'X-Requested-With': 'XMLHttpRequest'
+                }
+            })
+            .then(response => {
+                if (response.ok) {
+                    return response.json();
+                }
+                throw new Error('Error en la solicitud');
+            })
+            .then(data => {
+                if (data.success) {
+                    alert('Clave de acceso actualizada correctamente.');
+                    location.reload();
+                } else {
+                    alert('Error: ' + (data.message || 'No se pudo actualizar la clave de acceso.'));
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                alert('Error al actualizar la clave de acceso: ' + error.message);
             });
         }
     </script>
