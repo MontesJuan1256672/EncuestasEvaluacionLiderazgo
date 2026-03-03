@@ -1,5 +1,7 @@
 ﻿@{
     ViewData["Title"] = "Home Page";
+    var userType = Context.Session.GetInt32("UserType") ?? 0;
+    bool isAdmin = userType == (int)EncuestasEvaluacionLiderazgo.Models.TipoUsuario.Administrador;
 }
 
 <div class="text-center">
@@ -8,14 +10,17 @@
     
     <div class="grid md:grid-cols-3 gap-6 mt-12">
         <!-- Para Administradores -->
-        <div class="bg-white p-6 rounded-lg shadow-md hover:shadow-lg transition">
-            <div class="text-4xl mb-4">👨‍💼</div>
-            <h3 class="text-xl font-bold text-gray-900 mb-2">Administradores</h3>
-            <p class="text-gray-600 mb-4">Crea y gestiona encuestas, publica evaluaciones y analiza resultados de tu equipo</p>
-            <a asp-controller="Encuesta" asp-action="Index" class="inline-block bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition">
-                Ir a Encuestas
-            </a>
-        </div>
+        @if (isAdmin)
+        {
+            <div class="bg-white p-6 rounded-lg shadow-md hover:shadow-lg transition">
+                <div class="text-4xl mb-4">👨‍💼</div>
+                <h3 class="text-xl font-bold text-gray-900 mb-2">Administradores</h3>
+                <p class="text-gray-600 mb-4">Crea y gestiona encuestas, publica evaluaciones y analiza resultados de tu equipo</p>
+                <a asp-controller="Encuesta" asp-action="Index" class="inline-block bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition">
+                    Ir a Encuestas
+                </a>
+            </div>
+        }
         
         <!-- Para Evaluadores -->
         <div class="bg-white p-6 rounded-lg shadow-md hover:shadow-lg transition">
@@ -27,15 +32,31 @@
             </a>
         </div>
         
-        <!-- Características -->
-        <div class="bg-white p-6 rounded-lg shadow-md hover:shadow-lg transition">
-            <div class="text-4xl mb-4">✨</div>
-            <h3 class="text-xl font-bold text-gray-900 mb-2">Características</h3>
-            <p class="text-gray-600 mb-4">Múltiples tipos de preguntas, análisis de resultados y generación de reportes</p>
-            <a href="#features" class="inline-block bg-purple-600 text-white px-4 py-2 rounded-lg hover:bg-purple-700 transition">
-                Conocer más
-            </a>
-        </div>
+        <!-- Reporteador de Resultados -->
+        @if (isAdmin)
+        {
+            <div class="bg-white p-6 rounded-lg shadow-md hover:shadow-lg transition">
+                <div class="text-4xl mb-4">📊</div>
+                <h3 class="text-xl font-bold text-gray-900 mb-2">Reporteador de Resultados</h3>
+                <p class="text-gray-600 mb-4">Genera reportes detallados, análisis de competencias y visualización de datos de evaluaciones</p>
+                <a asp-controller="Reportes" asp-action="Index" class="inline-block bg-purple-600 text-white px-4 py-2 rounded-lg hover:bg-purple-700 transition">
+                    Ver Reportes
+                </a>
+            </div>
+        }
+
+        <!-- Administrador de personas a evaluar -->
+        @if (isAdmin)
+        {
+            <div class="bg-white p-6 rounded-lg shadow-md hover:shadow-lg transition">
+                <div class="text-4xl mb-4">👥</div>
+                <h3 class="text-xl font-bold text-gray-900 mb-2">Administrador de Personas</h3>
+                <p class="text-gray-600 mb-4">Gestiona el registro de personas a evaluar en tu organización</p>
+                <a asp-controller="PersonasEvaluar" asp-action="Index" class="inline-block bg-indigo-600 text-white px-4 py-2 rounded-lg hover:bg-indigo-700 transition">
+                    Gestionar Personas
+                </a>
+            </div>
+        }
     </div>
     
     <!-- Información adicional -->

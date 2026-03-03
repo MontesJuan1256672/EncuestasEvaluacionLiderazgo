@@ -1,6 +1,8 @@
 using System;
 using System.Data;
+using System.Collections.Generic;
 using Microsoft.Data.SqlClient;
+using EncuestasEvaluacionLiderazgo.Models;
 
 namespace EncuestasEvaluacionLiderazgo.Data
 {
@@ -169,54 +171,13 @@ namespace EncuestasEvaluacionLiderazgo.Data
         /// <returns>DataSet con los tipos de evaluación</returns>
         public static DataSet TraeTiposEvaluacion()
         {
-            SqlConnection sqlConnection = null;
-            SqlDataAdapter sqlDataAdapter = null;
-            DataSet dataSet = new DataSet();
-
             try
             {
-                // Obtener la conexión del DWH
-                string connectionString = DL.GetConEvaluaLiderazgo();
-                
-                if (string.IsNullOrEmpty(connectionString))
-                {
-                    throw new Exception("No se pudo obtener la cadena de conexión del EvaluaLiderazgo");
-                }
-
-                sqlConnection = new SqlConnection(connectionString);
-                sqlConnection.Open();
-
-                // Crear comando para ejecutar el SP
-                using (SqlCommand command = new SqlCommand("sp_traeTiposEvaluacion", sqlConnection))
-                {
-                    command.CommandType = CommandType.StoredProcedure;
-                    command.CommandTimeout = 0;
-
-                    // Ejecutar el stored procedure
-                    sqlDataAdapter = new SqlDataAdapter(command);
-                    sqlDataAdapter.Fill(dataSet);
-                }
-
-                return dataSet;
+                return DL.TraeTiposEvaluacion();
             }
             catch (Exception ex)
             {
                 throw new Exception("Error al obtener tipos de evaluación: " + ex.Message);
-            }
-            finally
-            {
-                if (sqlConnection != null && sqlConnection.State == ConnectionState.Open)
-                {
-                    sqlConnection.Close();
-                    sqlConnection.Dispose();
-                }
-
-                if (sqlDataAdapter != null)
-                {
-                    sqlDataAdapter.Dispose();
-                }
-
-                GC.Collect();
             }
         }
 
@@ -471,5 +432,80 @@ namespace EncuestasEvaluacionLiderazgo.Data
                 throw new Exception("Error al actualizar la clave de acceso: " + ex.Message);
             }
         }
+
+        /// <summary>
+        /// Obtiene las personas a evaluar según el tipo de evaluación
+        /// Nota: Se completará cuando la tabla de personas esté lista en la BD
+        /// </summary>
+        /// <param name="idTipoEvaluacion">Identificador del tipo de evaluación</param>
+        /// <returns>DataSet con las personas a evaluar</returns>
+        public static DataSet TraePersonasEvaluar(int idTipoEvaluacion)
+        {
+            try
+            {
+                return DL.TraePersonasEvaluar(idTipoEvaluacion);
+            }
+            catch (Exception ex)
+            {
+                throw new Exception("Error al obtener personas a evaluar: " + ex.Message);
+            }
+        }
+
+        /// <summary>
+        /// Busca un empleado por su número y ubicación
+        /// </summary>
+        /// <param name="noemp">Número de empleado</param>
+        /// <param name="idUbicacion">ID de la ubicación/ciudad</param>
+        /// <returns>DataTable con la información del empleado</returns>
+        public static DataTable BuscarEmpleado(int noemp, int idUbicacion)
+        {
+            try
+            {
+                string query = "SELECT * FROM Tr3ss.Personal WHERE NoEmp = " + noemp + " AND IDUbicacion = " + idUbicacion;
+                return DL.QueryGenericoDWH(query);
+            }
+            catch (Exception ex)
+            {
+                throw new Exception("Error al buscar empleado: " + ex.Message);
+            }
+        }
+
+        /// <summary>
+        /// Inserta una relación de tipo de encuesta y personal
+        /// Llama a DL.InsertaPorIdPersonal que ejecuta sp_Inserta_PorIdPersonal
+        /// </summary>
+        /// <param name="idTipoEncuesta">ID del tipo de encuesta</param>
+        /// <param name="idPersonal">ID del personal</param>
+        /// <returns>ID del registro insertado o 0 si no se pudo insertar</returns>
+        public static int InsertaPorIdPersonal(int idTipoEncuesta, int idPersonal)
+        {
+            try
+            {
+                return DL.InsertaPorIdPersonal(idTipoEncuesta, idPersonal);
+            }
+            catch (Exception ex)
+            {
+                throw new Exception("Error al insertar relación tipo encuesta-personal: " + ex.Message);
+            }
+        }
+
+        /// <summary>
+        /// Elimina (soft-delete) una persona a evaluar
+        /// Llama a DL.EliminaPersona que ejecuta sp_Elimina_PorIdPersonal
+        /// </summary>
+        /// <param name="idPersonal">ID del personal a eliminar</param>
+        /// <returns>1 si la operación fue exitosa, 0 si no se encontró el registro</returns>
+        public static int EliminaPersona(int idPersonal)
+        {
+            try
+            {
+                return DL.EliminaPersona(idPersonal);
+            }
+            catch (Exception ex)
+            {
+                throw new Exception("Error al eliminar persona a evaluar: " + ex.Message);
+            }
+        }
+
     }
 }

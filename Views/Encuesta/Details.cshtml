@@ -9,31 +9,104 @@
     <div class="bg-white rounded-lg shadow-md p-8 mb-8 border-l-4 border-blue-600">
         <div class="flex justify-between items-start mb-4">
             <div>
-                <h1 class="text-4xl font-bold text-gray-900 mb-2">@(new EncuestasEvaluacionLiderazgo.Views.Encuesta.DetailsModel().GetTituloEncuesta(Model.FiltroTipo))</h1>
+                <h1 class="text-4xl font-bold text-gray-900 mb-2">@Model.TituloEncuesta</h1>
                 <p class="text-gray-600 text-lg">@Model.Encuesta.Descripcion</p>
             </div>
-            <span class="@Model.GetEstadoClase(Model.Encuesta.Estado) text-sm font-bold px-4 py-2 rounded-full">
-                @Model.GetEstadoTexto(Model.Encuesta.Estado)
-            </span>
+
+            <!-- Switch de Idioma -->
+            <div class="flex items-center space-x-2 bg-gray-200 rounded-full p-1">
+                <button type="button" id="btn-idioma-es" class="idioma-btn active px-5 py-2 bg-white text-gray-900 rounded-full text-sm font-semibold transition-all duration-300 shadow-sm" data-idioma="es">
+                    🇪🇸 Español
+                </button>
+                <button type="button" id="btn-idioma-en" class="idioma-btn px-5 py-2 bg-transparent text-gray-600 rounded-full text-sm font-semibold transition-all duration-300" data-idioma="en">
+                    🇺🇸 English
+                </button>
+            </div>
         </div>
 
-        <!-- Info de la Encuesta -->
-        <div class="grid grid-cols-2 md:grid-cols-4 gap-4 mt-6 pt-6 border-t">
-            <div>
-                <p class="text-gray-600 text-sm">Creada el</p>
-                <p class="font-bold text-gray-900">@Model.Encuesta.FechaCreacion.ToString("dd/MM/yyyy")</p>
+        <!-- Indicaciones y Escala de Calificaciones -->
+        <div class="space-y-6 mt-6 pt-6 border-t">
+            <!-- Objetivo -->
+            <div class="bg-blue-50 border-l-4 border-blue-600 p-4 rounded">
+                <h3 class="text-lg font-bold text-blue-900 mb-2 seccion-titulo" data-es="📋 Objetivo del Cuestionario" data-en="📋 Questionnaire Objective">📋 Objetivo del Cuestionario</h3>
+                <p class="text-blue-800 seccion-texto" data-es="El objetivo de este cuestionario es hacer una valoración objetiva del desempeño" data-en="The objective of this questionnaire is to make an objective assessment of performance">El objetivo de este cuestionario es hacer una valoración objetiva del desempeño</p>
             </div>
-            <div>
-                <p class="text-gray-600 text-sm">Vencimiento</p>
-                <p class="font-bold text-gray-900">@Model.Encuesta.FechaVencimiento.ToString("dd/MM/yyyy")</p>
+
+            <!-- Indicaciones Importantes -->
+            <div class="bg-yellow-50 border-l-4 border-yellow-600 p-4 rounded">
+                <h3 class="text-lg font-bold text-yellow-900 mb-3 seccion-titulo" data-es="⚠️ Indicaciones Importantes" data-en="⚠️ Important Instructions">⚠️ Indicaciones Importantes</h3>
+                <ul class="text-yellow-800 space-y-2">
+                    <li class="flex items-start">
+                        <span class="font-bold mr-3">1)</span>
+                        <span class="seccion-texto" data-es="Esta evaluación es totalmente anónima" data-en="This evaluation is completely anonymous">Esta evaluación es totalmente anónima</span>
+                    </li>
+                    <li class="flex items-start">
+                        <span class="font-bold mr-3">2)</span>
+                        <span class="seccion-texto" data-es="Está enfocada a aspectos del trabajo, no involucra asuntos personales" data-en="It focuses on work-related aspects and does not involve personal matters">Está enfocada a aspectos del trabajo, no involucra asuntos personales</span>
+                    </li>
+                    <li class="flex items-start">
+                        <span class="font-bold mr-3">3)</span>
+                        <span class="seccion-texto" data-es="Ser claro(a) en tus sugerencias y/o comentarios" data-en="Be clear in your suggestions and/or comments">Ser claro(a) en tus sugerencias y/o comentarios</span>
+                    </li>
+                </ul>
             </div>
-            <div>
-                <p class="text-gray-600 text-sm">Preguntas</p>
-                <p class="font-bold text-gray-900">@Model.Encuesta.Preguntas?.Count ?? 0</p>
+
+            <!-- Escala de Calificaciones -->
+            <div class="bg-green-50 border-l-4 border-green-600 p-4 rounded">
+                <h3 class="text-lg font-bold text-green-900 mb-3 seccion-titulo" data-es="📊 Escala de Calificaciones" data-en="📊 Rating Scale">📊 Escala de Calificaciones</h3>
+                <p class="text-green-800 mb-3 text-sm seccion-texto" data-es="Lee cuidadosamente las siguientes afirmaciones y marca dentro de la opción más cercana a tu experiencia." data-en="Read the following statements carefully and mark the option closest to your experience.">Lee cuidadosamente las siguientes afirmaciones y marca dentro de la opción más cercana a tu experiencia.</p>
+                <div class="flex gap-4 flex-wrap items-center">
+                    <div class="flex items-center">
+                        <span class="inline-flex items-center justify-center h-8 w-8 rounded-full bg-green-600 text-white font-bold text-sm mr-3">5</span>
+                        <span class="text-green-800"><strong class="escala-label" data-es="Excepcional" data-en="Exceptional">Excepcional</strong></span>
+                    </div>
+                    <div class="flex items-center">
+                        <span class="inline-flex items-center justify-center h-8 w-8 rounded-full bg-blue-600 text-white font-bold text-sm mr-3">4</span>
+                        <span class="text-green-800"><strong class="escala-label" data-es="Destacado" data-en="Outstanding">Destacado</strong></span>
+                    </div>
+                    <div class="flex items-center">
+                        <span class="inline-flex items-center justify-center h-8 w-8 rounded-full bg-yellow-600 text-white font-bold text-sm mr-3">3</span>
+                        <span class="text-green-800"><strong class="escala-label" data-es="Satisfactorio" data-en="Satisfactory">Satisfactorio</strong></span>
+                    </div>
+                    <div class="flex items-center">
+                        <span class="inline-flex items-center justify-center h-8 w-8 rounded-full bg-orange-600 text-white font-bold text-sm mr-3">2</span>
+                        <span class="text-green-800"><strong class="escala-label" data-es="Deficiente" data-en="Deficient">Deficiente</strong></span>
+                    </div>
+                    <div class="flex items-center">
+                        <span class="inline-flex items-center justify-center h-8 w-8 rounded-full bg-red-600 text-white font-bold text-sm mr-3">1</span>
+                        <span class="text-green-800"><strong class="escala-label" data-es="Pésimo" data-en="Poor">Pésimo</strong></span>
+                    </div>
+                </div>
             </div>
+        </div>
+    </div>
+    
+    <!-- Persona a Evaluar -->
+    <div class="bg-white rounded-lg shadow-md p-8 border-l-4 border-gray-300 mb-8">
+        <div class="space-y-6 mt-6 pt-6 border-t">
             <div>
-                <p class="text-gray-600 text-sm">Respuestas</p>
-                <p class="font-bold text-gray-900">@Model.Encuesta.Respuestas?.Count ?? 0</p>
+                <label for="personaEvaluar" class="block text-gray-700 font-bold mb-2 seccion-texto" data-es="Persona a Evaluar" data-en="Person to Evaluate">
+                    Persona a Evaluar <span id="tipoEvaluacionLabel" class="text-blue-600"></span>
+                </label>
+                <select id="personaEvaluar" name="personaEvaluar"
+                        data-id-tipo-evaluacion="@Model.FiltroTipo"
+                        class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500">
+                    <option value="">-- Cargando personas --</option>
+                </select>
+            </div>
+
+            <div>
+                <label for="tiempoConPersona" class="block text-gray-700 font-bold mb-2 seccion-texto" data-es="¿Cuánto tiempo lleva con su actual líder/jefe directo?" data-en="How long have you been with your current leader/direct supervisor?">
+                    ¿Cuánto tiempo lleva con su actual líder/jefe directo?
+                </label>
+                <select id="tiempoConPersona" name="tiempoConPersona"
+                        class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 tiempo-select">
+                    <option value="" class="tiempo-option" data-es="-- Seleccione --" data-en="-- Select --">-- Seleccione --</option>
+                    <option value="1" class="tiempo-option" data-es="Menos de 1 mes" data-en="Less than 1 month">Menos de 1 mes</option>
+                    <option value="2" class="tiempo-option" data-es="De 1 a 3 meses" data-en="From 1 to 3 months">De 1 a 3 meses</option>
+                    <option value="3" class="tiempo-option" data-es="De 3 a 6 meses" data-en="From 3 to 6 months">De 3 a 6 meses</option>
+                    <option value="4" class="tiempo-option" data-es="Más de 6 meses" data-en="More than 6 months">Más de 6 meses</option>
+                </select>
             </div>
         </div>
     </div>
@@ -41,27 +114,51 @@
     <!-- Formulario de Respuestas -->
     @if (Model.Encuesta.Estado == EncuestasEvaluacionLiderazgo.Models.EstadoEncuesta.Publicada)
     {
-        var detailsModel = new EncuestasEvaluacionLiderazgo.Views.Encuesta.DetailsModel();
-        var preguntasDataSet = detailsModel.ObtenerPreguntasDeBaseDatos(Model.FiltroTipo);
         <form method="post" asp-action="Submit" asp-controller="Encuesta" asp-route-encuestaId="@Model.Encuesta.Id" asp-route-filtroTipo="@Model.FiltroTipo">
             <div class="space-y-8">
-                @if (detailsModel.TienePreguntasEnDataSet(preguntasDataSet))
+                @if (Model.TienePreguntasValidas)
                 {
-                    @foreach (var filaPregunта in detailsModel.ObtenerFilasPreguntasOrdenadas(preguntasDataSet))
+                    @foreach (var pregunta in Model.Preguntas)
                     {
                         <div class="bg-white rounded-lg shadow-md p-8 border-l-4 border-gray-300">
                             <!-- Número y Título de la Pregunta -->
                             <div class="mb-6">
                                 <div class="flex items-start space-x-4">
                                     <span class="flex-shrink-0 inline-flex items-center justify-center h-8 w-8 rounded-full bg-blue-100 text-blue-600 font-bold">
-                                        @detailsModel.ObtenerNumeroPregunta(filaPregunта)
+                                        @pregunta.NumeroPregunta
                                     </span>
                                     <div class="flex-1">
-                                        <h3 class="text-lg font-bold text-gray-900">
-                                            @detailsModel.ObtenerTextoPregunta(filaPregunта)
+                                        <h3 class="text-lg font-bold text-gray-900 pregunta-texto" data-id="@pregunta.IdPregunta" data-es="@pregunta.Texto" data-en="@pregunta.TextoIngles">
+                                            @pregunta.Texto
                                         </h3>
                                     </div>
+
+                                    <!-- Selector de Respuesta (Escala 1-5) -->
+                                    <div class="flex-shrink-0 ml-4">
+                                        <select name="@pregunta.NombreCampoRespuesta" 
+                                                class="respuesta-select px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white"
+                                                data-pregunta="@pregunta.NumeroPregunta">
+                                            <option value="">-- Seleccione --</option>
+                                            <option value="5">5 - Excepcional</option>
+                                            <option value="4">4 - Destacado</option>
+                                            <option value="3">3 - Satisfactorio</option>
+                                            <option value="2">2 - Deficiente</option>
+                                            <option value="1">1 - Pésimo</option>
+                                        </select>
+                                    </div>
                                 </div>
+                            </div>
+
+                            <!-- Comentario Abierto -->
+                            <div class="mt-6 pt-6 border-t">
+                                <label for="@pregunta.NombreCampoComentario" class="block text-sm font-semibold text-gray-700 mb-2 comentario-label" data-es="💬 Comentario (Opcional)" data-en="💬 Comment (Optional)">
+                                    💬 Comentario (Opcional)
+                                </label>
+                                <textarea id="@pregunta.NombreCampoComentario" 
+                                          name="@pregunta.NombreCampoComentario"
+                                          rows="3"
+                                          placeholder="Deja un comentario o sugerencia relacionado con esta pregunta..."
+                                          class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 resize-none comentario-placeholder" data-es="Deja un comentario o sugerencia relacionado con esta pregunta..." data-en="Leave a comment or suggestion related to this question..."></textarea>
                             </div>
                         </div>
                     }
@@ -98,6 +195,222 @@
 
 @section Scripts {
     <script>
-        // Validaciones adicionales si es necesario
+        let idiomaActual = 'es'; // Idioma por defecto
+
+        // Cargar personas a evaluar cuando se carga la página
+        document.addEventListener('DOMContentLoaded', function () {
+            cargarPersonasEvaluar();
+        });
+
+        // Función para cargar personas a evaluar
+        function cargarPersonasEvaluar() {
+            const comboPersonas = document.getElementById('personaEvaluar');
+            const idTipoEvaluacion = comboPersonas.getAttribute('data-id-tipo-evaluacion');
+
+            if (!idTipoEvaluacion) {
+                comboPersonas.innerHTML = '<option value="">-- Sin tipo de evaluación --</option>';
+                return;
+            }
+
+            // Llamar al endpoint GetPersonasEvaluar del controlador Reportes
+            fetch(`/Reportes/GetPersonasEvaluar?idTipoEvaluacion=${encodeURIComponent(idTipoEvaluacion)}`)
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success && data.personas && data.personas.length > 0) {
+                        // Limpiar opciones anteriores
+                        comboPersonas.innerHTML = '<option value="">-- Seleccione --</option>';
+
+                        // Agregar las nuevas opciones
+                        data.personas.forEach(persona => {
+                            const option = document.createElement('option');
+                            option.value = persona.value;
+                            option.textContent = persona.text;
+                            comboPersonas.appendChild(option);
+                        });
+                    } else {
+                        comboPersonas.innerHTML = '<option value="">-- Sin personas disponibles --</option>';
+                    }
+                })
+                .catch(error => {
+                    console.error('Error al cargar personas:', error);
+                    comboPersonas.innerHTML = '<option value="">-- Error al cargar --</option>';
+                });
+        }
+
+        // Evento para cambiar de idioma
+        document.querySelectorAll('.idioma-btn').forEach(btn => {
+            btn.addEventListener('click', function (e) {
+                e.preventDefault();
+                const idioma = this.getAttribute('data-idioma');
+                cambiarIdioma(idioma);
+            });
+        });
+
+        function cambiarIdioma(idioma) {
+            // Actualizar botones de idioma
+            document.querySelectorAll('.idioma-btn').forEach(btn => {
+                if (btn.getAttribute('data-idioma') === idioma) {
+                    btn.classList.add('active');
+                    btn.classList.remove('bg-transparent', 'text-gray-600');
+                    btn.classList.add('bg-white', 'text-gray-900', 'shadow-sm');
+                } else {
+                    btn.classList.remove('active');
+                    btn.classList.remove('bg-white', 'text-gray-900', 'shadow-sm');
+                    btn.classList.add('bg-transparent', 'text-gray-600');
+                }
+            });
+
+            // Actualizar textos de preguntas
+            document.querySelectorAll('.pregunta-texto').forEach(elemento => {
+                const textoEs = elemento.getAttribute('data-es');
+                const textoEn = elemento.getAttribute('data-en');
+                elemento.textContent = idioma === 'en' ? textoEn : textoEs;
+            });
+
+            // Actualizar títulos de secciones
+            document.querySelectorAll('.seccion-titulo').forEach(elemento => {
+                const textoEs = elemento.getAttribute('data-es');
+                const textoEn = elemento.getAttribute('data-en');
+                elemento.textContent = idioma === 'en' ? textoEn : textoEs;
+            });
+
+            // Actualizar textos de secciones
+            document.querySelectorAll('.seccion-texto').forEach(elemento => {
+                const textoEs = elemento.getAttribute('data-es');
+                const textoEn = elemento.getAttribute('data-en');
+                elemento.textContent = idioma === 'en' ? textoEn : textoEs;
+            });
+
+            // Actualizar labels de escala
+            document.querySelectorAll('.escala-label').forEach(elemento => {
+                const textoEs = elemento.getAttribute('data-es');
+                const textoEn = elemento.getAttribute('data-en');
+                elemento.textContent = idioma === 'en' ? textoEn : textoEs;
+            });
+
+            // Actualizar labels de comentario
+            document.querySelectorAll('.comentario-label').forEach(elemento => {
+                const textoEs = elemento.getAttribute('data-es');
+                const textoEn = elemento.getAttribute('data-en');
+                elemento.textContent = idioma === 'en' ? textoEn : textoEs;
+            });
+
+            // Actualizar placeholders de comentario
+            document.querySelectorAll('.comentario-placeholder').forEach(elemento => {
+                const textoEs = elemento.getAttribute('data-es');
+                const textoEn = elemento.getAttribute('data-en');
+                elemento.placeholder = idioma === 'en' ? textoEn : textoEs;
+            });
+
+            // Actualizar opciones del combobox de tiempo
+            document.querySelectorAll('.tiempo-option').forEach(elemento => {
+                const textoEs = elemento.getAttribute('data-es');
+                const textoEn = elemento.getAttribute('data-en');
+                elemento.textContent = idioma === 'en' ? textoEn : textoEs;
+            });
+
+            idiomaActual = idioma;
+        }
+
+        // Validación del formulario antes de enviar
+        function validarFormulario(e) {
+            let errores = [];
+            let primerError = null;
+
+            // Limpiar estilos de error previos
+            document.querySelectorAll('.respuesta-select').forEach(select => {
+                select.classList.remove('border-red-500', 'ring-2', 'ring-red-300');
+            });
+            document.getElementById('personaEvaluar')?.classList.remove('border-red-500', 'ring-2', 'ring-red-300');
+            document.getElementById('tiempoConPersona')?.classList.remove('border-red-500', 'ring-2', 'ring-red-300');
+
+            // Remover mensaje de error anterior
+            const errorAnterior = document.getElementById('validacion-error');
+            if (errorAnterior) errorAnterior.remove();
+
+            // Validar persona a evaluar
+            const personaEvaluar = document.getElementById('personaEvaluar');
+            if (personaEvaluar && !personaEvaluar.value) {
+                personaEvaluar.classList.add('border-red-500', 'ring-2', 'ring-red-300');
+                errores.push(idiomaActual === 'en' ? 'Select a person to evaluate' : 'Seleccione una persona a evaluar');
+                if (!primerError) primerError = personaEvaluar;
+            }
+
+            // Validar tiempo con persona
+            const tiempoConPersona = document.getElementById('tiempoConPersona');
+            if (tiempoConPersona && !tiempoConPersona.value) {
+                tiempoConPersona.classList.add('border-red-500', 'ring-2', 'ring-red-300');
+                errores.push(idiomaActual === 'en' ? 'Select the time with your leader' : 'Seleccione el tiempo con su líder');
+                if (!primerError) primerError = tiempoConPersona;
+            }
+
+            // Validar que todos los selects de respuesta tengan valor
+            const selectsRespuesta = document.querySelectorAll('.respuesta-select');
+            let preguntasSinResponder = [];
+
+            selectsRespuesta.forEach(select => {
+                if (!select.value) {
+                    select.classList.add('border-red-500', 'ring-2', 'ring-red-300');
+                    preguntasSinResponder.push(select.getAttribute('data-pregunta'));
+                    if (!primerError) primerError = select;
+                }
+            });
+
+            if (preguntasSinResponder.length > 0) {
+                if (preguntasSinResponder.length === selectsRespuesta.length) {
+                    errores.push(idiomaActual === 'en' ? 'All questions require a response' : 'Todas las preguntas requieren una respuesta');
+                } else {
+                    const nums = preguntasSinResponder.join(', ');
+                    errores.push(idiomaActual === 'en' 
+                        ? `Question(s) ${nums} require(s) a response` 
+                        : `La(s) pregunta(s) ${nums} requiere(n) una respuesta`);
+                }
+            }
+
+            // Si hay errores, mostrar mensaje y prevenir envío
+            if (errores.length > 0) {
+                e.preventDefault();
+
+                const mensajeError = document.createElement('div');
+                mensajeError.id = 'validacion-error';
+                mensajeError.className = 'bg-red-100 border-l-4 border-red-600 text-red-800 p-4 rounded-lg mb-6';
+                mensajeError.innerHTML = `
+                    <p class="font-bold text-lg mb-2">${idiomaActual === 'en' ? '⚠️ Please complete the following:' : '⚠️ Por favor complete lo siguiente:'}</p>
+                    <ul class="list-disc list-inside space-y-1">
+                        ${errores.map(e => `<li>${e}</li>`).join('')}
+                    </ul>
+                `;
+
+                // Insertar mensaje arriba del formulario
+                const formulario = document.querySelector('form');
+                formulario.parentNode.insertBefore(mensajeError, formulario);
+
+                // Scroll al primer error
+                if (primerError) {
+                    primerError.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                }
+
+                return false;
+            }
+
+            return true;
+        }
+
+        // Asignar validación al formulario
+        document.addEventListener('DOMContentLoaded', function () {
+            const formulario = document.querySelector('form');
+            if (formulario) {
+                formulario.addEventListener('submit', validarFormulario);
+            }
+
+            // Limpiar estilo de error cuando el usuario selecciona una opción
+            document.querySelectorAll('.respuesta-select, #personaEvaluar, #tiempoConPersona').forEach(select => {
+                select.addEventListener('change', function () {
+                    if (this.value) {
+                        this.classList.remove('border-red-500', 'ring-2', 'ring-red-300');
+                    }
+                });
+            });
+        });
     </script>
 }

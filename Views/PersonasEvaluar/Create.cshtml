@@ -1,0 +1,250 @@
+@model PersonaEvaluar
+
+@{
+    ViewData["Title"] = "Agregar Persona a Evaluar";
+}
+
+<div class="py-8">
+    <!-- Header -->
+    <div class="mb-8">
+        <h1 class="text-4xl font-bold text-gray-900">➕ Agregar Nueva Persona</h1>
+        <p class="text-gray-600 mt-2">Registra una nueva persona que será evaluada</p>
+    </div>
+
+    <!-- Formulario -->
+    <div class="bg-white rounded-lg shadow-md p-8">
+        <form method="post" asp-action="Create">
+            <div class="grid grid-cols-3 gap-8">
+                <!-- Columna Izquierda - Campos de Entrada -->
+                <div class="col-span-2">
+                    <div class="space-y-6">
+                        <!-- Número de Empleado -->
+                        <div>
+                            <label for="numeroEmpleado" class="block text-gray-700 font-bold mb-2">Número de Empleado *</label>
+                            <input type="text" id="numeroEmpleado" asp-for="NumeroEmpleado" 
+                                   class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500" 
+                                   placeholder="001234" required />
+                            <span asp-validation-for="NumeroEmpleado" class="text-red-600 text-sm"></span>
+                        </div>
+
+                        <!-- Ciudad con Botón Buscar -->
+                        <div>
+                            <label for="ciudad" class="block text-gray-700 font-bold mb-2">Ciudad *</label>
+                            <div class="flex gap-2">
+                                <select id="ciudad" asp-for="Ciudad" asp-items="ViewBag.Ciudades"
+                                        class="flex-1 px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500" 
+                                        required>
+                                </select>
+                                <button type="button" id="btnBuscar" 
+                                        class="bg-green-600 text-white px-4 py-2 rounded-lg hover:bg-green-700 transition font-bold whitespace-nowrap">
+                                    🔍 Buscar
+                                </button>
+                            </div>
+                            <span asp-validation-for="Ciudad" class="text-red-600 text-sm"></span>
+                        </div>
+
+                        <!-- Puesto -->
+                        <div>
+                            <label for="puesto" class="block text-gray-700 font-bold mb-2">Puesto *</label>
+                            <select id="puesto" asp-for="Puesto" asp-items="ViewBag.TiposEvaluacion"
+                                    class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500" 
+                                    required>
+                            </select>
+                            <span asp-validation-for="Puesto" class="text-red-600 text-sm"></span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Columna Derecha - Información de la Persona -->
+                <div class="col-span-1">
+                    <div class="bg-blue-50 border-2 border-blue-300 rounded-lg p-6 h-full">
+                        <h3 class="text-gray-700 font-bold mb-4">Información de la Persona</h3>
+                        <div id="infoPersona" class="text-center">
+                            <p class="text-gray-500 text-sm italic">Busca el empleado para ver sus datos</p>
+                        </div>
+                        <div id="datosPersona" style="display: none;" class="space-y-4">
+                            <div>
+                                <p class="text-gray-600 text-xs font-semibold">NOMBRE</p>
+                                <p id="nombrePersona" class="text-lg font-bold text-gray-900"></p>
+                            </div>
+                            <div>
+                                <p class="text-gray-600 text-xs font-semibold">NÚMERO EMPLEADO</p>
+                                <p id="numeroPersona" class="text-sm text-gray-700"></p>
+                            </div>
+                        </div>
+                        <div id="errorPersona" style="display: none;" class="bg-red-100 text-red-700 p-3 rounded text-sm">
+                            No se encontró información del empleado
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Botones -->
+            <div class="flex gap-4 mt-8">
+                <button type="button" id="btnGuardar" class="bg-blue-600 text-white px-6 py-3 rounded-lg hover:bg-blue-700 transition font-bold">
+                    ✓ Guardar Persona
+                </button>
+                <a href="@Url.Action("Index")" class="bg-gray-300 text-gray-800 px-6 py-3 rounded-lg hover:bg-gray-400 transition font-bold">
+                    ✕ Cancelar
+                </a>
+            </div>
+        </form>
+    </div>
+</div>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+    <script>
+        // Variables globales para rastrear el estado
+        let empleadoBuscado = false;
+        let idPersonalGlobal = 0;
+
+        document.getElementById('btnBuscar').addEventListener('click', function(e) {
+            e.preventDefault();
+            
+            const numeroEmpleado = document.getElementById('numeroEmpleado').value.trim();
+            const ciudad = document.getElementById('ciudad').value.trim();
+            
+            if (!numeroEmpleado) {
+                alert('Por favor ingresa un número de empleado');
+                return;
+            }
+
+            if (!ciudad) {
+                alert('Por favor selecciona una ciudad');
+                return;
+            }
+
+            // Llamar al endpoint para buscar la información del empleado
+            fetch(`/PersonasEvaluar/GetEmpleado?numeroEmpleado=${encodeURIComponent(numeroEmpleado)}&ciudad=${encodeURIComponent(ciudad)}`)
+                .then(response => {
+                    if (!response.ok) {
+                        throw new Error('Error en la solicitud');
+                    }
+                    return response.json();
+                })
+                .then(data => {
+                    if (data.success) {
+                        // Guardar el ID del personal
+                        idPersonalGlobal = data.idPersonal || 0;
+
+                        // Mostrar datos encontrados
+                        document.getElementById('infoPersona').style.display = 'none';
+                        document.getElementById('errorPersona').style.display = 'none';
+                        document.getElementById('datosPersona').style.display = 'block';
+                        
+                        document.getElementById('nombrePersona').textContent = data.nombre;
+                        document.getElementById('numeroPersona').textContent = data.numeroEmpleado;
+                        
+                        // Marcar que se buscó el empleado
+                        empleadoBuscado = true;
+                    } else {
+                        // Mostrar error
+                        document.getElementById('datosPersona').style.display = 'none';
+                        document.getElementById('infoPersona').style.display = 'none';
+                        document.getElementById('errorPersona').style.display = 'block';
+                        empleadoBuscado = false;
+                        idPersonalGlobal = 0;
+                    }
+                })
+                .catch(error => {
+                    console.error('Error:', error);
+                    document.getElementById('datosPersona').style.display = 'none';
+                    document.getElementById('infoPersona').style.display = 'none';
+                    document.getElementById('errorPersona').style.display = 'block';
+                    empleadoBuscado = false;
+                    idPersonalGlobal = 0;
+                });
+        });
+
+        // Método para guardar la persona
+        document.getElementById('btnGuardar').addEventListener('click', function(e) {
+            e.preventDefault();
+
+            // Validar que se haya buscado el empleado primero
+            if (!empleadoBuscado) {
+                alert('Por favor busca al empleado primero antes de guardar');
+                return;
+            }
+
+            // Obtener el ID del tipo de encuesta (puesto)
+            const idTipoEncuesta = document.getElementById('puesto').value.trim();
+
+            // Validar que se haya seleccionado un tipo de encuesta
+            if (!idTipoEncuesta) {
+                alert('Por favor selecciona un tipo de evaluación');
+                return;
+            }
+
+            // Validar que tengamos el ID del personal
+            if (idPersonalGlobal <= 0) {
+                alert('Error: No se pudo obtener la información del empleado. Por favor busca nuevamente.');
+                return;
+            }
+
+            // Mostrar confirmación
+            if (!confirm('¿Estás seguro de que deseas guardar esta persona?')) {
+                return;
+            }
+
+            // Deshabilitar botón mientras se procesa
+            const btnGuardar = document.getElementById('btnGuardar');
+            btnGuardar.disabled = true;
+            btnGuardar.textContent = '⏳ Guardando...';
+            btnGuardar.style.opacity = '0.6';
+            btnGuardar.style.cursor = 'not-allowed';
+
+            // Enviar datos vía AJAX
+            const formData = new FormData();
+            formData.append('idTipoEncuesta', idTipoEncuesta);
+            formData.append('idPersonal', idPersonalGlobal);
+
+            fetch('/PersonasEvaluar/GuardarPersona', {
+                method: 'POST',
+                body: formData
+            })
+            .then(response => {
+                if (!response.ok) {
+                    throw new Error('Error en la solicitud');
+                }
+                return response.json();
+            })
+            .then(data => {
+                if (data.success) {
+                    // Guardar exitoso
+                    alert(data.message);
+                    // Limpiar formulario
+                    document.getElementById('numeroEmpleado').value = '';
+                    document.getElementById('ciudad').value = '';
+                    document.getElementById('puesto').value = '';
+                    empleadoBuscado = false;
+                    idPersonalGlobal = 0;
+                    document.getElementById('infoPersona').style.display = 'block';
+                    document.getElementById('datosPersona').style.display = 'none';
+                    // Redirigir después de 1 segundo
+                    setTimeout(() => {
+                        window.location.href = '/PersonasEvaluar';
+                    }, 1000);
+                } else {
+                    // Error al guardar
+                    alert('Error: ' + data.message);
+                    // Reabilitar botón
+                    btnGuardar.disabled = false;
+                    btnGuardar.textContent = '✓ Guardar Persona';
+                    btnGuardar.style.opacity = '1';
+                    btnGuardar.style.cursor = 'pointer';
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                alert('Error al guardar la persona: ' + error.message);
+                // Reabilitar botón
+                btnGuardar.disabled = false;
+                btnGuardar.textContent = '✓ Guardar Persona';
+                btnGuardar.style.opacity = '1';
+                btnGuardar.style.cursor = 'pointer';
+            });
+        });
+    </script>
+}
+

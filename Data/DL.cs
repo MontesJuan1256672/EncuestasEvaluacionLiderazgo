@@ -1,8 +1,10 @@
 using System;
 using System.Data;
+using System.Collections.Generic;
 using Microsoft.Data.SqlClient;
 using ConnStringsTelvista;
 using Librerias;
+using EncuestasEvaluacionLiderazgo.Models;
 
 namespace EncuestasEvaluacionLiderazgo.Data
 {
@@ -13,7 +15,8 @@ namespace EncuestasEvaluacionLiderazgo.Data
     /// </summary>
     public class DL
     {
-        private static string ConStr = CS_ConStr();
+        private static string ConStr = GetConEvaluaLiderazgo();
+        private static string ConDWH = GetConDWH();
 
         /// <summary>
         /// Obtiene la cadena de conexión para el Data Warehouse (DWH)
@@ -206,7 +209,7 @@ namespace EncuestasEvaluacionLiderazgo.Data
             {
                 sqlcommand = new SqlCommand(Query);
                 sqlcommand.CommandType = CommandType.Text;
-                sqlcommand.Connection = new SqlConnection(DL.GetConDWH());
+                sqlcommand.Connection = new SqlConnection(ConDWH);
                 sqldataadapter = new SqlDataAdapter(sqlcommand);
 
                 sqlcommand.CommandTimeout = 0;
@@ -253,7 +256,7 @@ namespace EncuestasEvaluacionLiderazgo.Data
             {
                 sqlcommand = new SqlCommand(Query);
                 sqlcommand.CommandType = CommandType.Text;
-                sqlcommand.Connection = new SqlConnection(DL.CS_ConStr());
+                sqlcommand.Connection = new SqlConnection(ConStr);
 
                 sqldataadapter = new SqlDataAdapter(sqlcommand);
 
@@ -296,7 +299,7 @@ namespace EncuestasEvaluacionLiderazgo.Data
             {
                 sqlcommand = new SqlCommand(Query);
                 sqlcommand.CommandType = CommandType.Text;
-                sqlcommand.Connection = new SqlConnection(DL.GetConEvaluaLiderazgo());
+                sqlcommand.Connection = new SqlConnection(ConStr);
                 sqldataadapter = new SqlDataAdapter(sqlcommand);
 
                 sqlcommand.CommandTimeout = 0;
@@ -330,6 +333,58 @@ namespace EncuestasEvaluacionLiderazgo.Data
             }
         }
 
+        public static DataSet TraeTiposEvaluacion()
+        {
+            SqlConnection sqlConnection = null;
+            SqlDataAdapter sqlDataAdapter = null;
+            DataSet dataSet = new DataSet();
+
+            try
+            {
+                string connectionString = ConStr;
+                
+                if (string.IsNullOrEmpty(connectionString))
+                {
+                    throw new Exception("No se pudo obtener la cadena de conexión del EvaluaLiderazgo");
+                }
+
+                sqlConnection = new SqlConnection(connectionString);
+                sqlConnection.Open();
+
+                // Crear comando para ejecutar el SP
+                using (SqlCommand command = new SqlCommand("sp_traeTiposEvaluacion", sqlConnection))
+                {
+                    command.CommandType = CommandType.StoredProcedure;
+                    command.CommandTimeout = 0;
+
+                    // Ejecutar el stored procedure
+                    sqlDataAdapter = new SqlDataAdapter(command);
+                    sqlDataAdapter.Fill(dataSet);
+                }
+
+                return dataSet;
+            }
+            catch (Exception ex)
+            {
+                throw new Exception("Error al obtener tipos de evaluación: " + ex.Message);
+            }
+            finally
+            {
+                if (sqlConnection != null && sqlConnection.State == ConnectionState.Open)
+                {
+                    sqlConnection.Close();
+                    sqlConnection.Dispose();
+                }
+
+                if (sqlDataAdapter != null)
+                {
+                    sqlDataAdapter.Dispose();
+                }
+
+                GC.Collect();
+            }
+        }
+
         /// <summary>
         /// Inserta una nueva pregunta en la encuesta de evaluación de liderazgo
         /// </summary>
@@ -339,7 +394,7 @@ namespace EncuestasEvaluacionLiderazgo.Data
             SqlCommand sqlcommand = null;
             try
             {
-                sqlcommand = new SqlCommand("sp_insertaPreguntaII", new SqlConnection(DL.GetConEvaluaLiderazgo()));
+                sqlcommand = new SqlCommand("sp_insertaPreguntaII", new SqlConnection(ConStr));
                 sqlcommand.CommandType = CommandType.StoredProcedure;
                 sqlcommand.CommandTimeout = 0;
 
@@ -380,7 +435,7 @@ namespace EncuestasEvaluacionLiderazgo.Data
             SqlCommand sqlcommand = null;
             try
             {
-                sqlcommand = new SqlCommand("sp_actuPreguntaIII", new SqlConnection(DL.GetConEvaluaLiderazgo()));
+                sqlcommand = new SqlCommand("sp_actuPreguntaIII", new SqlConnection(ConStr));
                 sqlcommand.CommandType = CommandType.StoredProcedure;
                 sqlcommand.CommandTimeout = 0;
 
@@ -423,7 +478,7 @@ namespace EncuestasEvaluacionLiderazgo.Data
             DataSet dataset = new DataSet();
             try
             {
-                sqlcommand = new SqlCommand("sp_traeCompetencias", new SqlConnection(DL.GetConEvaluaLiderazgo()));
+                sqlcommand = new SqlCommand("sp_traeCompetencias", new SqlConnection(ConStr));
                 sqlcommand.CommandType = CommandType.StoredProcedure;
                 sqlcommand.CommandTimeout = 0;
 
@@ -467,7 +522,7 @@ namespace EncuestasEvaluacionLiderazgo.Data
             DataSet dataset = new DataSet();
             try
             {
-                sqlcommand = new SqlCommand("sp_traeActividades", new SqlConnection(DL.GetConEvaluaLiderazgo()));
+                sqlcommand = new SqlCommand("sp_traeActividades", new SqlConnection(ConStr));
                 sqlcommand.CommandType = CommandType.StoredProcedure;
                 sqlcommand.CommandTimeout = 0;
 
@@ -511,7 +566,7 @@ namespace EncuestasEvaluacionLiderazgo.Data
             DataSet dataset = new DataSet();
             try
             {
-                sqlcommand = new SqlCommand("sp_traeDescripciones", new SqlConnection(DL.GetConEvaluaLiderazgo()));
+                sqlcommand = new SqlCommand("sp_traeDescripciones", new SqlConnection(ConStr));
                 sqlcommand.CommandType = CommandType.StoredProcedure;
                 sqlcommand.CommandTimeout = 0;
 
@@ -557,7 +612,7 @@ namespace EncuestasEvaluacionLiderazgo.Data
             DataSet dataset = new DataSet();
             try
             {
-                sqlcommand = new SqlCommand("sp_traePreguntasII", new SqlConnection(DL.GetConEvaluaLiderazgo()));
+                sqlcommand = new SqlCommand("sp_traePreguntasII", new SqlConnection(ConStr));
                 sqlcommand.CommandType = CommandType.StoredProcedure;
                 sqlcommand.CommandTimeout = 0;
                 sqlcommand.Parameters.Add("@IdTipoEvaluacion", SqlDbType.VarChar).Value = IdTipoEvaluacion;
@@ -603,7 +658,7 @@ namespace EncuestasEvaluacionLiderazgo.Data
             SqlConnection SqlCon = null;
             try
             {
-                SqlCon = new SqlConnection(GetConEvaluaLiderazgo());
+                SqlCon = new SqlConnection(ConStr);
                 SqlCon.Open();
                 
                 using (SqlCommand cmd = new SqlCommand("sp_ActualizaEstadoEncuesta", SqlCon))
@@ -642,7 +697,7 @@ namespace EncuestasEvaluacionLiderazgo.Data
             SqlConnection SqlCon = null;
             try
             {
-                SqlCon = new SqlConnection(GetConEvaluaLiderazgo());
+                SqlCon = new SqlConnection(ConStr);
                 SqlCon.Open();
                 
                 using (SqlCommand cmd = new SqlCommand("sp_actuPreguntaStat", SqlCon))
@@ -681,7 +736,7 @@ namespace EncuestasEvaluacionLiderazgo.Data
             SqlConnection SqlCon = null;
             try
             {
-                SqlCon = new SqlConnection(GetConEvaluaLiderazgo());
+                SqlCon = new SqlConnection(ConStr);
                 SqlCon.Open();
                 
                 using (SqlCommand cmd = new SqlCommand("sp_actuPreguntaOrden", SqlCon))
@@ -720,7 +775,7 @@ namespace EncuestasEvaluacionLiderazgo.Data
             SqlConnection SqlCon = null;
             try
             {
-                SqlCon = new SqlConnection(GetConEvaluaLiderazgo());
+                SqlCon = new SqlConnection(ConStr);
                 SqlCon.Open();
                 
                 using (SqlCommand cmd = new SqlCommand("sp_ActualizaClaveEncuesta", SqlCon))
@@ -744,6 +799,159 @@ namespace EncuestasEvaluacionLiderazgo.Data
                 if (SqlCon != null && SqlCon.State == ConnectionState.Open)
                     SqlCon.Close();
                 SqlCon?.Dispose();
+                GC.Collect();
+            }
+        }
+
+        /// <summary>
+        /// Obtiene las personas a evaluar según el tipo de evaluación
+        /// Nota: Se completará cuando la tabla de personas esté lista en la BD
+        /// </summary>
+        /// <param name="idTipoEvaluacion">Identificador del tipo de evaluación</param>
+        /// <returns>DataSet con las personas a evaluar</returns>
+        public static DataSet TraePersonasEvaluar(int idTipoEvaluacion)
+        {
+            SqlConnection sqlConnection = null;
+            SqlDataAdapter sqlDataAdapter = null;
+            DataSet dataSet = new DataSet();
+
+            try
+            {
+                string connectionString = ConDWH; 
+                
+                if (string.IsNullOrEmpty(connectionString))
+                {
+                    throw new Exception("No se pudo obtener la cadena de conexión del EvaluaLiderazgo");
+                }
+
+                sqlConnection = new SqlConnection(connectionString);
+                sqlConnection.Open();
+
+                // Nota: Usar procedure almacenado o consulta SQL según la estructura final de la BD
+                using (SqlCommand command = new SqlCommand("sp_traePersonasEvaluar", sqlConnection))
+                {
+                    command.CommandType = CommandType.StoredProcedure;
+                    command.Parameters.Add("@IdTipoEncuesta", SqlDbType.Int).Value = idTipoEvaluacion;
+                    command.CommandTimeout = 0;
+
+                    sqlDataAdapter = new SqlDataAdapter(command);
+                    sqlDataAdapter.Fill(dataSet);
+                }
+
+                return dataSet;
+            }
+            catch (Exception ex)
+            {
+                throw new Exception("Error al obtener personas a evaluar: " + ex.Message);
+            }
+            finally
+            {
+                if (sqlConnection != null && sqlConnection.State == ConnectionState.Open)
+                {
+                    sqlConnection.Close();
+                    sqlConnection.Dispose();
+                }
+
+                if (sqlDataAdapter != null)
+                {
+                    sqlDataAdapter.Dispose();
+                }
+
+                GC.Collect();
+            }
+        }
+
+        /// <summary>
+        /// Inserta una relación de tipo de encuesta y personal
+        /// Ejecuta el SP sp_Inserta_PorIdPersonal
+        /// </summary>
+        /// <param name="IdTipoEncuesta">ID del tipo de encuesta</param>
+        /// <param name="IdPersonal">ID del personal</param>
+        /// <returns>1 si la operación fue exitosa, 0 si no se pudo insertar</returns>
+        public static int InsertaPorIdPersonal(int IdTipoEncuesta, int IdPersonal)
+        {
+            SqlConnection SqlCon = null;
+            try
+            {
+                string connectionString = ConStr;
+                SqlCon = new SqlConnection(connectionString);
+                SqlCon.Open();
+                using (SqlCommand cmd = new SqlCommand("sp_Inserta_PorIdPersonal", SqlCon))
+                {
+                    cmd.CommandType = CommandType.StoredProcedure;
+                    cmd.Parameters.Add("@IdTipoEncuesta", SqlDbType.Int).Value = IdTipoEncuesta;
+                    cmd.Parameters.Add("@IdPersonal", SqlDbType.Int).Value = IdPersonal;
+
+                    cmd.ExecuteNonQuery();
+                    
+                    // ExecuteNonQuery() retorna -1 cuando hay SET NOCOUNT ON en el SP
+                    // Si llegamos aquí sin excepción, la operación fue exitosa
+                    return 1;
+                }
+            }
+            catch (Exception Ex)
+            {
+                throw Ex;
+            }
+            finally
+            {
+                if (SqlCon != null && SqlCon.State == ConnectionState.Open)
+                {
+                    SqlCon.Close();
+                    SqlCon.Dispose();
+                }
+
+                GC.Collect();
+            }
+        }
+
+        /// <summary>
+        /// Elimina (soft-delete) una persona a evaluar por su ID
+        /// Ejecuta el SP sp_Elimina_PorIdPersonal que establece Activo = 0
+        /// </summary>
+        /// <param name="idPersonal">ID del personal a eliminar</param>
+        /// <returns>1 si la operación fue exitosa, 0 si no se encontró el registro</returns>
+        public static int EliminaPersona(int idPersonal)
+        {
+            SqlConnection SqlCon = null;
+            DataTable dt = new DataTable();
+            try
+            {
+                string connectionString = ConStr;
+                SqlCon = new SqlConnection(connectionString);
+                SqlCon.Open();
+                using (SqlCommand cmd = new SqlCommand("sp_Elimina_PorIdPersonal", SqlCon))
+                {
+                    cmd.CommandType = CommandType.StoredProcedure;
+                    cmd.Parameters.Add("@IdPersonal", SqlDbType.Int).Value = idPersonal;
+
+                    SqlDataAdapter adapter = new SqlDataAdapter(cmd);
+                    DataSet ds = new DataSet();
+                    adapter.Fill(ds);
+                    dt = ds.Tables[0];
+
+                    // El SP retorna SELECT @@ROWCOUNT
+                    if (dt.Rows.Count > 0)
+                    {
+                        int filasAfectadas = int.Parse(dt.Rows[0][0].ToString());
+                        return filasAfectadas > 0 ? 1 : 0;
+                    }
+                    else
+                        return 0;
+                }
+            }
+            catch (Exception Ex)
+            {
+                throw Ex;
+            }
+            finally
+            {
+                if (SqlCon != null && SqlCon.State == ConnectionState.Open)
+                {
+                    SqlCon.Close();
+                    SqlCon.Dispose();
+                }
+
                 GC.Collect();
             }
         }

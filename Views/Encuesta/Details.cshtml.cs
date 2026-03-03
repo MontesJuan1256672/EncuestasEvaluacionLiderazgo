@@ -208,6 +208,14 @@ namespace EncuestasEvaluacionLiderazgo.Views.Encuesta
         }
 
         /// <summary>
+        /// Obtiene el texto de la pregunta en inglés desde una fila del DataSet
+        /// </summary>
+        public string ObtenerTextoPreguntaIngles(DataRow fila)
+        {
+            return fila?["cPregunta_Ingles"]?.ToString() ?? "";
+        }
+
+        /// <summary>
         /// Obtiene el número de orden de la pregunta desde una fila del DataSet
         /// </summary>
         public int ObtenerNumeroPregunta(DataRow fila)
@@ -223,3 +231,6 @@ namespace EncuestasEvaluacionLiderazgo.Views.Encuesta
         }
     }
 }
+
+
+

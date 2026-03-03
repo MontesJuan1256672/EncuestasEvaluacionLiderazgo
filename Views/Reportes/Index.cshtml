@@ -1,0 +1,160 @@
+@model ReportesIndexViewModel
+
+@{
+    ViewData["Title"] = "Reporteador de Resultados";
+}
+
+<div class="w-full mx-auto py-8">
+    <!-- Encabezado -->
+    <div class="mb-8">
+        <h1 class="text-4xl font-bold text-gray-900 mb-2">📊 Reporteador de Resultados</h1>
+        <p class="text-gray-600">Análisis detallado de respuestas y evaluaciones de liderazgo</p>
+    </div>
+
+    <!-- Filtros de Búsqueda -->
+    <div class="bg-white p-6 rounded-lg shadow-md mb-8">
+        <h2 class="text-2xl font-bold text-gray-900 mb-4">🔍 Filtros de Búsqueda</h2>
+        <form method="get" asp-action="Index" class="grid md:grid-cols-4 gap-4">
+            <!-- Tipo de Reporte -->
+            <div>
+                <label for="tipoReporte" class="block text-gray-700 font-bold mb-2">Tipo de Reporte</label>
+                <select id="tipoReporte" name="tipoReporte"
+                        class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500">
+                    <option value="">-- Seleccione --</option>
+                    <option value="1">Reporte Normal</option>
+                    <option value="2">Reporte Histórico</option>
+                </select>
+            </div>
+
+            <!-- Encuesta -->
+            <div>
+                <label for="encuestaId" class="block text-gray-700 font-bold mb-2">Encuesta</label>
+                <select asp-for="EncuestaId" asp-items="Model.TiposEvaluacion" id="encuestaId"
+                        class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500">
+                </select>
+            </div>
+
+            <!-- Ciudad -->
+            <div>
+                <label for="ciudad" class="block text-gray-700 font-bold mb-2">Ciudad</label>
+                <select id="ciudad" name="ciudad" asp-items="ViewBag.Ciudades"
+                        class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500">
+                </select>
+            </div>
+
+            <!-- Período -->
+            <div>
+                <label for="fechaInicio" class="block text-gray-700 font-bold mb-2">Fecha Inicio</label>
+                <input asp-for="FechaInicio" type="date"
+                       class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500" />
+            </div>
+
+            <div>
+                <label for="fechaFinal" class="block text-gray-700 font-bold mb-2">Fecha Final</label>
+                <input asp-for="FechaFinal" type="date"
+                       class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500" />
+            </div>
+
+
+
+            <!-- Persona a Evaluar -->
+            <div>
+                <label for="personaEvaluar" class="block text-gray-700 font-bold mb-2">
+                    Persona a Evaluar <span id="tipoEvaluacionLabel" class="text-blue-600"></span>
+                </label>
+                <select id="personaEvaluar" name="personaEvaluar"
+                        class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500">
+                    <option value="">-- Seleccione --</option>
+                </select>
+            </div>
+
+            <!-- Botones -->
+            <div class="flex items-end gap-2">
+                <button type="submit" class="flex-1 bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition font-bold">
+                    🔍 Buscar
+                </button>
+                <button type="reset" class="flex-1 bg-gray-300 text-gray-800 px-4 py-2 rounded-lg hover:bg-gray-400 transition font-bold">
+                    ↻ Limpiar
+                </button>
+            </div>
+        </form>
+    </div>
+
+    <!-- Botones de Acción -->
+    <div class="flex gap-4">
+         <a asp-controller="Home" asp-action="Index" class="bg-gray-300 text-gray-800 px-6 py-3 rounded-lg hover:bg-gray-400 transition font-bold">
+            ← Volver al Inicio
+        </a>
+    </div>
+</div>
+
+<script>
+    // Actualizar dinámicamente el label y cargar personas según la Encuesta seleccionada
+    document.getElementById('encuestaId').addEventListener('change', function() {
+        const selectedOption = this.options[this.selectedIndex];
+        const selectedText = selectedOption.text;
+        const selectedValue = selectedOption.value;
+        const tipoEvaluacionLabel = document.getElementById('tipoEvaluacionLabel');
+        
+        // Actualizar el label
+        if (selectedValue && selectedValue !== '') {
+            tipoEvaluacionLabel.textContent = `(${selectedText})`;
+        } else {
+            tipoEvaluacionLabel.textContent = '';
+        }
+
+        // Cargar personas dinámicamente
+        loadPersonasEvaluar(selectedValue);
+    });
+    
+    // Función para cargar personas a evaluar vía AJAX
+    function loadPersonasEvaluar(idTipoEvaluacion) {
+        const personaSelect = document.getElementById('personaEvaluar');
+        
+        if (!idTipoEvaluacion || idTipoEvaluacion === '') {
+            // Si no hay selección, mostrar opción por defecto
+            personaSelect.innerHTML = '<option value="">-- Seleccione --</option>';
+            return;
+        }
+
+        // Hacer petición AJAX
+        fetch(`/Reportes/GetPersonasEvaluar?idTipoEvaluacion=${encodeURIComponent(idTipoEvaluacion)}`)
+            .then(response => response.json())
+            .then(data => {
+                personaSelect.innerHTML = '<option value="">-- Seleccione --</option>';
+                
+                if (data.success && data.personas && data.personas.length > 0) {
+                    data.personas.forEach(persona => {
+                        const option = document.createElement('option');
+                        option.value = persona.value;
+                        option.text = persona.text;
+                        personaSelect.appendChild(option);
+                    });
+                } else {
+                    const option = document.createElement('option');
+                    option.value = '';
+                    option.text = 'No hay personas disponibles';
+                    personaSelect.appendChild(option);
+                }
+            })
+            .catch(error => {
+                console.error('Error al cargar personas:', error);
+                personaSelect.innerHTML = '<option value="">Error al cargar datos</option>';
+            });
+    }
+    
+    // Inicializar el label al cargar la página si hay un valor seleccionado
+    window.addEventListener('load', function() {
+        const encuestaSelect = document.getElementById('encuestaId');
+        const selectedOption = encuestaSelect.options[encuestaSelect.selectedIndex];
+        const selectedText = selectedOption.text;
+        const selectedValue = selectedOption.value;
+        const tipoEvaluacionLabel = document.getElementById('tipoEvaluacionLabel');
+        
+        if (selectedValue && selectedValue !== '') {
+            tipoEvaluacionLabel.textContent = `(${selectedText})`;
+            // Cargar personas inicialmente si hay un valor seleccionado
+            loadPersonasEvaluar(selectedValue);
+        }
+    });
+</script>

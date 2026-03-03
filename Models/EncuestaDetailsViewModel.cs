@@ -17,6 +17,21 @@ namespace EncuestasEvaluacionLiderazgo.Models
         public string FiltroTipo { get; set; } = "";
 
         /// <summary>
+        /// Título procesado de la encuesta basado en el tipo de evaluación
+        /// </summary>
+        public string TituloEncuesta { get; set; } = "";
+
+        /// <summary>
+        /// Lista de preguntas procesadas y ordenadas
+        /// </summary>
+        public List<PreguntaViewModel> Preguntas { get; set; } = new List<PreguntaViewModel>();
+
+        /// <summary>
+        /// Indica si hay preguntas disponibles para mostrar
+        /// </summary>
+        public bool TienePreguntasValidas => Preguntas != null && Preguntas.Any();
+
+        /// <summary>
         /// Obtiene las clases CSS para el badge de estado de la encuesta
         /// </summary>
         public string GetEstadoClase(EstadoEncuesta estado)
@@ -77,5 +92,44 @@ namespace EncuestasEvaluacionLiderazgo.Models
                 _ => ""
             };
         }
+    }
+
+    /// <summary>
+    /// Modelo de vista para una pregunta en el formulario de respuestas
+    /// Contiene la información de la pregunta ya procesada para presentación
+    /// </summary>
+    public class PreguntaViewModel
+    {
+        /// <summary>
+        /// ID único de la pregunta
+        /// </summary>
+        public int IdPregunta { get; set; }
+
+        /// <summary>
+        /// Número de orden (posición en la encuesta)
+        /// </summary>
+        public int NumeroPregunta { get; set; }
+
+        /// <summary>
+        /// Texto de la pregunta en español
+        /// </summary>
+        public string Texto { get; set; } = "";
+
+        /// <summary>
+        /// Texto de la pregunta en inglés
+        /// </summary>
+        public string TextoIngles { get; set; } = "";
+
+        /// <summary>
+        /// Nombre del campo en el formulario para la respuesta
+        /// Formato: respuesta_{IdPregunta}
+        /// </summary>
+        public string NombreCampoRespuesta => $"respuesta_{IdPregunta}";
+
+        /// <summary>
+        /// Nombre del campo en el formulario para el comentario
+        /// Formato: comentario_{IdPregunta}
+        /// </summary>
+        public string NombreCampoComentario => $"comentario_{IdPregunta}";
     }
 }

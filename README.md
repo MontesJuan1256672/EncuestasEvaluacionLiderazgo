@@ -8,8 +8,11 @@ Sistema web escalable para crear y gestionar encuestas de evaluación de compete
 ✅ **Autenticación de usuarios** - Login/Register con diferentes tipos de usuario  
 ✅ **Gestión de encuestas** - Crear, editar, publicar y responder encuestas  
 ✅ **Múltiples tipos de preguntas** - Texto, opción única, múltiple, escala  
+✅ **Soporte bilingüe** - Encuestas y preguntas en Español e Inglés con switch dinámico  
+✅ **Gestión de personas a evaluar** - CRUD completo con búsqueda por empleado  
+✅ **Cargas dinámicas AJAX** - Comboboxes que se actualizan sin recargar la página  
 ✅ **Diseño responsivo** - Tailwind CSS para interfaz moderna y limpia  
-✅ **Código bien estructurado** - Interfaces, servicios, utilidades  
+✅ **Código bien estructurado** - Interfaces, servicios, capas de datos  
 ✅ **Fácil de escalar** - Preparado para integración con BD real  
 
 ## 📋 Requisitos
@@ -60,14 +63,25 @@ EncuestasEvaluacionLiderazgo/
 │   ├── AuthController.cs          # Autenticación
 │   ├── EncuestaController.cs      # Gestión de encuestas
 │   ├── EditaEncuestaController.cs # Edición de encuestas
-│   └── HomeController.cs           # Página de inicio
+│   ├── PersonasEvaluarController.cs # Gestión de personas a evaluar
+│   ├── ReportesController.cs      # Reportes de evaluación
+│   └── HomeController.cs          # Página de inicio
 │
 ├── Models/
 │   ├── Usuario.cs                 # Usuario del sistema
 │   ├── Encuesta.cs                # Encuesta
 │   ├── Pregunta.cs                # Pregunta de encuesta
 │   ├── OpcionRespuesta.cs         # Opción de respuesta
-│   └── Respuesta.cs               # Respuesta de usuario
+│   ├── Respuesta.cs               # Respuesta de usuario
+│   ├── PersonaEvaluar.cs          # Persona a ser evaluada
+│   ├── EncuestaIndexViewModel.cs  # ViewModel para listado de encuestas
+│   ├── EncuestaDetailsViewModel.cs# ViewModel para detalles de encuesta
+│   ├── PreguntaViewModel.cs       # ViewModel para preguntas (bilingüe)
+│   └── ReportesIndexViewModel.cs  # ViewModel para reportes
+│
+├── Data/
+│   ├── FL.cs                      # Capa de Lógica de Negocio
+│   └── DL.cs                      # Capa de Datos (SQL Server)
 │
 ├── Services/
 │   ├── IAuthService.cs            # Interfaz de autenticación
@@ -78,7 +92,7 @@ EncuestasEvaluacionLiderazgo/
 │   └── RespuestaService.cs        # Implementación de respuestas
 │
 ├── Utilities/
-│   └── SessionHelper.cs            # Utilidades de sesión
+│   └── SessionHelper.cs           # Utilidades de sesión
 │
 ├── Views/
 │   ├── Auth/
@@ -86,38 +100,75 @@ EncuestasEvaluacionLiderazgo/
 │   │   └── Register.cshtml        # Página de registro
 │   ├── Encuesta/
 │   │   ├── Index.cshtml           # Listado de encuestas
-│   │   ├── Details.cshtml         # Responder encuesta
+│   │   ├── Index.cshtml.cs        # Code-behind para Index
+│   │   ├── Details.cshtml         # Responder encuesta (con switch idioma)
+│   │   ├── Details.cshtml.cs      # Code-behind con métodos helper
 │   │   └── Create.cshtml          # Crear encuesta
 │   ├── EditaEncuesta/
-│   │   └── Index.cshtml           # Editar encuesta
+│   │   ├── Index.cshtml           # Editar encuesta
+│   │   └── Index.cshtml.cs        # Code-behind para Index
+│   ├── PersonasEvaluar/
+│   │   ├── Index.cshtml           # Listado de personas
+│   │   └── Create.cshtml          # Agregar persona a evaluar
+│   ├── Home/
+│   │   ├── Index.cshtml           # Página de inicio
+│   │   └── Index.cshtml.cs        # Code-behind para Index
+│   ├── Reportes/
+│   │   └── Index.cshtml           # Panel de reportes
 │   └── Shared/
 │       ├── _Layout.cshtml         # Layout principal
-│       └── _Layout.cshtml.css     # Estilos CSS
+│       ├── _Layout.cshtml.css     # Estilos CSS
+│       ├── _ValidationScriptsPartial.cshtml # Scripts de validación
+│       └── Error.cshtml           # Página de error
 │
 ├── wwwroot/
 │   ├── css/
+│   │   └── site.css               # Estilos personalizados
 │   ├── js/
+│   │   └── site.js                # Scripts personalizados
 │   └── lib/
+│       ├── bootstrap/             # Bootstrap UI components
+│       ├── jquery/                # jQuery library
+│       └── jquery-validation/     # jQuery validation
 │
-├── Program.cs                      # Configuración de la app
-├── appsettings.json               # Configuración
-└── README.md                       # Este archivo
+├── Program.cs                     # Configuración de la app
+├── appsettings.json              # Configuración
+├── appsettings.Development.json  # Configuración de desarrollo
+├── EncuestasEvaluacionLiderazgo.csproj # Archivo de proyecto
+└── README.md                      # Este archivo
 ```
 
 ## 🎯 Flujo de Uso
 
 ### Para Administradores:
 1. Login con credenciales admin
-2. Crear nueva encuesta
-3. Agregar preguntas y opciones
-4. Publicar encuesta
-5. Ver respuestas y reportes
+2. **Gestionar Personas a Evaluar:**
+   - Ir a "Personas a Evaluar"
+   - Seleccionar tipo de evaluación
+   - Buscar empleado por número (AJAX)
+   - Agregar persona a la lista
+   - Eliminar personas (soft-delete)
+3. **Gestionar Encuestas:**
+   - Crear nueva encuesta
+   - Agregar preguntas en español (con opción de inglés)
+   - Publicar encuesta
+4. **Ver Reportes:**
+   - Filtrar por tipo de evaluación
+   - Filtrar por ciudad
+   - Seleccionar persona a evaluar
+   - Analizar respuestas
 
 ### Para Evaluadores:
 1. Login con credenciales evaluador
 2. Ver encuestas disponibles
-3. Responder encuesta
-4. Enviar respuestas
+3. Seleccionar encuesta para responder
+4. **Responder Encuesta:**
+   - Switch de idioma (Español/English)
+   - Leer instrucciones en idioma seleccionado
+   - Seleccionar persona a evaluar
+   - Calificar cada pregunta (escala 1-5)
+   - Agregar comentarios opcionales
+   - Enviar respuestas
 
 ## 🛠️ Componentes Principales
 
@@ -140,6 +191,21 @@ Edición y administración:
 - `Update()` - Guardar cambios
 - `Publish()` - Publicar encuesta
 - `Delete()` - Eliminar encuesta
+
+### PersonasEvaluarController
+Gestión de personas a evaluar:
+- `Index(string idTipoEvaluacion)` - Listar personas filtradas por tipo de evaluación
+- `Create()` - Mostrar formulario para agregar persona
+- `GetEmpleado(string numeroEmpleado, string ciudad)` - AJAX para búsqueda de empleados desde DWH
+- `GuardarPersona(int idTipoEncuesta, int idPersonal)` - AJAX para guardar persona a evaluar
+- `Delete(int id)` - Soft-delete (marca como inactiva)
+- Métodos helper: `CargarCiudades()` - Retorna ciudades disponibles (17/18/19), `ObtenerTiposEvaluacion()` - Retorna tipos de evaluación
+
+### ReportesController
+Análisis y reportes:
+- `Index()` - Panel principal de reportes
+- `GetPersonasEvaluar()` - API para cargar personas dinámicamente
+- `GetCompetenciasPorTipo()` - API para cargar competencias por tipo
 
 ## 🎨 Diseño y Estilos
 
@@ -197,28 +263,54 @@ Consideraciones actuales y mejoras recomendadas:
 
 ## 🚀 Próximos Pasos
 
-### Fase 1: Base de Datos
-- [ ] Integrar SQL Server o PostgreSQL
-- [ ] Implementar Entity Framework Core
-- [ ] Crear migrations
-- [ ] Seed de datos iniciales
+### Fase 1: Encuestas Completas ✅ (En Progreso)
+- [x] Crear modelo PersonaEvaluar
+- [x] Implementar CRUD de personas a evaluar
+- [x] Integración con DWH para búsqueda de empleados
+- [x] Crear EncuestaDetailsViewModel con soporte bilingüe
+- [x] Implementar switch de idioma en vista Details
+- [x] Crear combobox dinámico para seleccionar persona a evaluar
+- [ ] **Implementar Submit de respuestas** - Recopilar y guardar respuestas del formulario
+- [ ] Crear tabla Respuestas en BD
+- [ ] Persistencia de datos de respuestas
+- [ ] Validación de respuestas requeridas
 
-### Fase 2: Funcionalidades
-- [ ] Reportes y gráficos
-- [ ] Exportar a Excel/PDF
-- [ ] Envío de invitaciones por email
-- [ ] Análisis avanzado de resultados
-- [ ] Plantillas de encuestas
+### Fase 2: Reportes y Análisis
+- [ ] Dashboard de resultados
+- [ ] Gráficos de respuestas por pregunta
+- [ ] Análisis por persona evaluada
+- [ ] Análisis por tipo de evaluación
+- [ ] Exportar reportes a Excel/PDF
+- [ ] Análisis comparativo entre periodos
 
-### Fase 3: Testing
-- [ ] Unit tests
-- [ ] Integration tests
+### Fase 3: Mejoras de UX
+- [ ] Notificaciones por email de invitación
+- [ ] Recordatorios de encuestas pendientes
+- [ ] Progreso visual de finalización
+- [ ] Validación mejorada del lado del cliente
+- [ ] Temas de color personalizables
+
+### Fase 4: Administración
+- [ ] Plantillas de encuestas reutilizables
+- [ ] Gestión de periodos de evaluación
+- [ ] Auditoría y logging de cambios
+- [ ] Copiar encuestas existentes
+- [ ] Versionado de encuestas
+
+### Fase 5: Testing y DevOps
+- [ ] Unit tests para controladores
+- [ ] Tests de integración
 - [ ] Tests E2E
-
-### Fase 4: DevOps
 - [ ] CI/CD pipeline
-- [ ] Docker
-- [ ] Publicación en producción
+- [ ] Docker containerization
+- [ ] Documentación API (Swagger)
+
+### Fase 6: Escalabilidad
+- [ ] Migración completa a Entity Framework Core
+- [ ] Caché distribuida (Redis)
+- [ ] Optimización de queries
+- [ ] Índices en base de datos
+- [ ] Load balancing
 
 ## 📝 Configuración (appsettings.json)
 
@@ -234,12 +326,88 @@ Consideraciones actuales y mejoras recomendadas:
 }
 ```
 
-## 🐛 Solución de Problemas
+## � Características Implementadas
 
-### Error: "No se encuentra SqlServer..."
-→ Datos en memoria están habilitados. No requiere BD.
+### Autenticación y Sesiones
+- ✅ Login y Registro de usuarios
+- ✅ Validación de credenciales
+- ✅ Gestión de sesiones
+- ✅ Cierre de sesión
+- ✅ Diferentes tipos de usuario (Admin, Evaluador)
 
-### Error: "Puerto 5001 ya en uso"
+### Gestión de Encuestas
+- ✅ Crear encuestas
+- ✅ Publicar encuestas
+- ✅ Responder encuestas con interfaz amigable
+- ✅ Soporte para múltiples tipos de preguntas
+- ✅ Escala de calificación 1-5
+
+### Personas a Evaluar
+- ✅ CRUD completo
+- ✅ Búsqueda de empleados desde DWH (Tr3ss.Personal)
+- ✅ Asignación a tipos de evaluación
+- ✅ Soft-delete (marcar como inactivas)
+- ✅ Filtrado por ciudad y tipo de evaluación
+
+### Soporte Multiidioma
+- ✅ Switch dinámico Español/Inglés en la vista
+- ✅ Textos de indicaciones en ambos idiomas
+- ✅ Preguntas en español e inglés
+- ✅ Escala de calificaciones bilingüe
+- ✅ Labels y placeholders que cambian con el idioma
+
+### Cargas Dinámicas AJAX
+- ✅ Búsqueda de empleados en tiempo real
+- ✅ Carga de personas a evaluar según tipo
+- ✅ Comboboxes que se rellenan automáticamente
+- ✅ Peticiones GET seguras sin recargar página
+
+### Diseño y UX
+- ✅ Interfaz moderna con Tailwind CSS
+- ✅ Responsive design (mobile, tablet, desktop)
+- ✅ Cards con información estructurada
+- ✅ Botones con estados visuales
+- ✅ Validación visual de formularios
+
+## 🔧 Base de Datos
+
+### Stored Procedures Utilizados
+
+**sp_traePersonasEvaluar** (SQL Server)
+```sql
+EXECUTE sp_traePersonasEvaluar @IdTipoEncuesta = 1
+```
+Retorna: `IdPersonal, NoEmp, Ciudad, Nombre, cDescripcion`
+
+**sp_traePreguntasII** (SQL Server)
+```sql
+EXECUTE sp_traePreguntasII @IdTipoEvaluacion = '1'
+```
+Retorna: `IdPregunta, nOrden, cPregunta, cPregunta_Ingles, ...`
+
+**sp_Inserta_PorIdPersonal** (SQL Server)
+```sql
+EXECUTE sp_Inserta_PorIdPersonal @IdTipoEncuesta = 1, @IdPersonal = 100
+```
+
+**sp_Elimina_PorIdPersonal** (SQL Server)
+```sql
+EXECUTE sp_Elimina_PorIdPersonal @idPersonal = 100
+```
+Realiza soft-delete (Activo = 0)
+
+### Tablas de Consulta
+
+- **Tr3ss.Personal** - DWH con datos maestros de empleados
+  - Columnas: `IdPersonal, PersonalId, Nombre, Ciudad, Puesto, EmpleadoActivo`
+  - Usada para búsqueda de empleados a evaluar
+
+## �🐛 Solución de Problemas
+
+### Error: "Submitted form is not multipart/form-data"
+→ Verificar que el formulario use `enctype="multipart/form-data"` si sube archivos.
+
+### Error: "Puerto 5001 ya en uso" / "Puerto 5032 ya en uso"
 ```bash
 # Usar otro puerto
 dotnet run --urls "https://localhost:5002"
@@ -247,6 +415,18 @@ dotnet run --urls "https://localhost:5002"
 
 ### Error: "Archivos estáticos no se cargan"
 → Verificar que wwwroot exista y los archivos estén presentes.
+
+### Error: "AJAX devuelve 404 en GetPersonasEvaluar"
+→ Verificar que el endpoint sea `/Reportes/GetPersonasEvaluar` (no `/Encuesta/...`).
+
+### Error: "Las personas no cargan en el combobox"
+→ Abre la consola del navegador (F12) y verifica:
+  - La solicitud AJAX se envía correctamente
+  - El servidor retorna JSON válido
+  - El idTipoEvaluacion no está vacío
+
+### Error: "Placeholder no aparece en textarea"
+→ Verificar que no haya espacios en blanco dentro del elemento `<textarea></textarea>`.
 
 ## 📞 Soporte y Contacto
 

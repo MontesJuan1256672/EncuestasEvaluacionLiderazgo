@@ -216,10 +216,46 @@ namespace EncuestasEvaluacionLiderazgo.Controllers
             if (encuesta == null)
                 return NotFound();
 
+            // Procesar las preguntas en el controlador (lógica de negocio)
+            var detailsModel = new EncuestasEvaluacionLiderazgo.Views.Encuesta.DetailsModel();
+            var preguntasDataSet = detailsModel.ObtenerPreguntasDeBaseDatos(filtroTipo);
+            var filasPreguntas = detailsModel.ObtenerFilasPreguntasOrdenadas(preguntasDataSet);
+
+            // Mapear DataRows a List<PreguntaViewModel>
+            var preguntas = new List<PreguntaViewModel>();
+            int numeroOrden = 1;
+
+            foreach (var fila in filasPreguntas)
+            {
+                try
+                {
+                    int idPregunta = Convert.ToInt32(fila["IdPregunta"] ?? 0);
+                    string textoPregunta = detailsModel.ObtenerTextoPregunta(fila);
+                    string textoPreguntaIngles = detailsModel.ObtenerTextoPreguntaIngles(fila);
+
+                    preguntas.Add(new PreguntaViewModel
+                    {
+                        IdPregunta = idPregunta,
+                        NumeroPregunta = numeroOrden,
+                        Texto = textoPregunta,
+                        TextoIngles = textoPreguntaIngles
+                    });
+
+                    numeroOrden++;
+                }
+                catch (Exception ex)
+                {
+                    TempData["Error"] = $"Error al procesar pregunta: {ex.Message}";
+                }
+            }
+
+            // Llenar el ViewModel con todos los datos procesados
             var viewModel = new EncuestaDetailsViewModel
             {
                 Encuesta = encuesta,
-                FiltroTipo = filtroTipo ?? ""
+                FiltroTipo = filtroTipo ?? "",
+                TituloEncuesta = detailsModel.GetTituloEncuesta(filtroTipo),
+                Preguntas = preguntas
             };
 
             return View(viewModel);
