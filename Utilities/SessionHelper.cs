@@ -66,6 +66,30 @@ namespace EncuestasEvaluacionLiderazgo.Utilities
         }
 
         /// <summary>
+        /// Obtiene el IdPersonal desencriptado desde la sesión
+        /// </summary>
+        public static string GetIdPersonal(ISession session)
+        {
+            return session.GetString("IdPersonal") ?? "";
+        }
+
+        /// <summary>
+        /// Obtiene el IdCentro desencriptado desde la sesión
+        /// </summary>
+        public static string GetIdCentro(ISession session)
+        {
+            return session.GetString("IdCentro") ?? "";
+        }
+
+        /// <summary>
+        /// Obtiene el NoEmp desencriptado desde la sesión
+        /// </summary>
+        public static string GetNoEmp(ISession session)
+        {
+            return session.GetString("NoEmp") ?? "";
+        }
+
+        /// <summary>
         /// Limpia la sesión del usuario
         /// </summary>
         public static void ClearUserSession(ISession session)
@@ -73,6 +97,9 @@ namespace EncuestasEvaluacionLiderazgo.Utilities
             session.Remove("UserId");
             session.Remove("UserName");
             session.Remove("UserType");
+            session.Remove("IdPersonal");
+            session.Remove("IdCentro");
+            session.Remove("NoEmp");
         }
     }
 }

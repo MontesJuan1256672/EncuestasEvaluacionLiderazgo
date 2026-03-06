@@ -956,5 +956,130 @@ namespace EncuestasEvaluacionLiderazgo.Data
             }
         }
 
+        /// <summary>
+        /// Inserta una evaluación de liderazgo en la base de datos
+        /// </summary>
+        /// <param name="respuesta">Objeto Respuesta con los datos de la evaluación</param>
+        /// <returns>String con el resultado de la operación (ID de la evaluación insertada)</returns>
+        public static string InsertaEvaluacion(Respuesta respuesta)
+        {
+            string resultado = "";
+            SqlCommand sqlcommand = null;
+            try
+            {
+                sqlcommand = new SqlCommand("sp_inseEvaluacionDWH", new SqlConnection(ConStr));
+                sqlcommand.CommandType = CommandType.StoredProcedure;
+                sqlcommand.CommandTimeout = 0;
+
+                sqlcommand.Parameters.Add("@IdTipoEvaluacion", SqlDbType.Int).Value = respuesta.IdTipoEvaluacion;
+                sqlcommand.Parameters.Add("@IdCentroDWH", SqlDbType.VarChar, 2).Value = respuesta.IdCentroDWH;
+                sqlcommand.Parameters.Add("@IDPersonalDWH_Jefe", SqlDbType.Int).Value = respuesta.IDPersonalDWH_Jefe;
+                sqlcommand.Parameters.Add("@IDPersonalDWH_Evaluado", SqlDbType.Int).Value = respuesta.IDPersonalDWH_Evaluado;
+                sqlcommand.Parameters.Add("@cNombreEvaluado", SqlDbType.VarChar, 100).Value = respuesta.cNombreEvaluado;
+                sqlcommand.Parameters.Add("@cComentarios", SqlDbType.VarChar, 1000).Value = respuesta.cComentarios;
+                sqlcommand.Parameters.Add("@nNoEmpAgente", SqlDbType.Decimal).Value = respuesta.nNoEmpAgente;
+                sqlcommand.Parameters.Add("@IDAntig", SqlDbType.Decimal).Value = respuesta.IDAntig;
+
+                sqlcommand.Connection.Open();
+                var result = sqlcommand.ExecuteScalar();
+                resultado = result != null ? result.ToString() : "";
+            }
+            catch (Exception ex)
+            {
+                resultado = "Error: " + ex.Message;
+            }
+            finally
+            {
+                if (sqlcommand != null && sqlcommand.Connection != null)
+                {
+                    if (sqlcommand.Connection.State == ConnectionState.Open)
+                        sqlcommand.Connection.Close();
+                }
+            }
+
+            return resultado;
+        }
+
+        /// <summary>
+        /// Inserta una respuesta de evaluación en la base de datos
+        /// </summary>
+        /// <param name="idEvaluacion">ID de la evaluación</param>
+        /// <param name="idPregunta">ID de la pregunta</param>
+        /// <param name="nRespuesta">Valor numérico de la respuesta (1-5)</param>
+        /// <param name="cComentarios">Comentarios de la respuesta</param>
+        /// <returns>String con el resultado de la operación</returns>
+        public static string InsertaRespuesta(int idEvaluacion, int idPregunta, int nRespuesta, string cComentarios)
+        {
+            string resultado = "";
+            SqlCommand sqlcommand = null;
+            try
+            {
+                sqlcommand = new SqlCommand("sp_inseRespuestas", new SqlConnection(ConStr));
+                sqlcommand.CommandType = CommandType.StoredProcedure;
+                sqlcommand.CommandTimeout = 0;
+
+                sqlcommand.Parameters.Add("@IdEvaluacion", SqlDbType.Int).Value = idEvaluacion;
+                sqlcommand.Parameters.Add("@IdPregunta", SqlDbType.Int).Value = idPregunta;
+                sqlcommand.Parameters.Add("@nRespuesta", SqlDbType.Int).Value = nRespuesta;
+                sqlcommand.Parameters.Add("@cComentarios", SqlDbType.VarChar, 500).Value = cComentarios ?? "";
+
+                sqlcommand.Connection.Open();
+                var result = sqlcommand.ExecuteScalar();
+                resultado = result != null ? result.ToString() : "";
+            }
+            catch (Exception ex)
+            {
+                resultado = "Error: " + ex.Message;
+            }
+            finally
+            {
+                if (sqlcommand != null && sqlcommand.Connection != null)
+                {
+                    if (sqlcommand.Connection.State == ConnectionState.Open)
+                        sqlcommand.Connection.Close();
+                }
+            }
+
+            return resultado;
+        }
+
+        /// <summary>
+        /// Inserta un registro en tblContesto indicando que el usuario contestó la encuesta
+        /// </summary>
+        /// <param name="idPersonalDWH">ID del personal en DWH</param>
+        /// <returns>String con el ID del registro insertado</returns>
+        public static string InseRegistro(int idPersonalDWH)
+        {
+            string resultado = "";
+            SqlCommand sqlcommand = null;
+            try
+            {
+                sqlcommand = new SqlCommand("sp_inseRegistro", new SqlConnection(ConStr));
+                sqlcommand.CommandType = CommandType.StoredProcedure;
+                sqlcommand.CommandTimeout = 0;
+
+                sqlcommand.Parameters.Add("@IDPersonalDWH", SqlDbType.Int).Value = idPersonalDWH;
+
+                sqlcommand.Connection.Open();
+                var result = sqlcommand.ExecuteScalar();
+                resultado = result != null ? result.ToString() : "";
+            }
+            catch (Exception ex)
+            {
+                resultado = "Error: " + ex.Message;
+            }
+            finally
+            {
+                if (sqlcommand != null && sqlcommand.Connection != null)
+                {
+                    if (sqlcommand.Connection.State == ConnectionState.Open)
+                        sqlcommand.Connection.Close();
+                }
+            }
+
+            return resultado;
+        }
+
+
     }
 }

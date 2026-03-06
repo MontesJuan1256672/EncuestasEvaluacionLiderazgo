@@ -5,6 +5,7 @@ using System.Threading.Tasks;
 using EncuestasEvaluacionLiderazgo.Services;
 using EncuestasEvaluacionLiderazgo.Models;
 using EncuestasEvaluacionLiderazgo.Data;
+using EncuestasEvaluacionLiderazgo.Utilities;
 using System.Data;
 
 namespace EncuestasEvaluacionLiderazgo.Controllers
@@ -276,14 +277,56 @@ namespace EncuestasEvaluacionLiderazgo.Controllers
             IdEncuesta = filtroTipo ?? string.Empty;
 
             int userId = GetCurrentUserId();
+            string idPersonal = SessionHelper.GetIdPersonal(HttpContext.Session);
+            string idCentro = SessionHelper.GetIdCentro(HttpContext.Session);
+            string noEmp = SessionHelper.GetNoEmp(HttpContext.Session);
+
+            // Extraer personaEvaluar, nombrePersonaEvaluar y tiempoConPersona del diccionario de respuestas
+            string idPersonalEvaluado = respuestas != null && respuestas.TryGetValue("personaEvaluar", out string personaEvaluar) ? personaEvaluar : string.Empty;
+            string nombrePersonaEvaluar = respuestas != null && respuestas.TryGetValue("nombrePersonaEvaluar", out string nombreEvaluado) ? nombreEvaluado : string.Empty;
+            string tiempoConPersona = respuestas != null && respuestas.TryGetValue("tiempoConPersona", out string tiempo) ? tiempo : string.Empty;
+            string comentarioGeneral = respuestas != null && respuestas.TryGetValue("comentarioGeneral", out string comentario) ? comentario : string.Empty;
+
             var respuesta = new Respuesta
             {
-                EncuestaId = encuestaId,
-                UsuarioId = userId,
-                Completada = true
+                IdTipoEvaluacion = Convert.ToInt32(filtroTipo),
+                IdCentroDWH = idCentro,
+                IDPersonalDWH_Jefe = int.TryParse(idPersonal, out int idJefe) ? idJefe : 0,
+                IDPersonalDWH_Evaluado = int.TryParse(idPersonalEvaluado, out int idEvaluado) ? idEvaluado : 0,
+                cNombreEvaluado = nombrePersonaEvaluar,
+                cComentarios = comentarioGeneral,
+                nNoEmpAgente = decimal.TryParse(noEmp, out decimal nEmp) ? nEmp : 0,
+                IDAntig = int.TryParse(tiempoConPersona, out int idAntig) ? idAntig : 0
             };
 
             var (success, message) = await _respuestaService.SaveRespuestaAsync(respuesta);
+
+            // Insertar cada respuesta individual por pregunta
+            if (success && respuestas != null)
+            {
+                // Extraer el IdEvaluacion del mensaje (formato: "Evaluación guardada exitosamente. ID: {id}")
+                string idEvalStr = message.Contains("ID: ") ? message.Substring(message.LastIndexOf("ID: ") + 4).Trim() : "0";
+                int idEvaluacion = int.TryParse(idEvalStr, out int idEval) ? idEval : 0;
+
+                foreach (var kvp in respuestas)
+                {
+                    // Filtrar solo los campos de respuesta (respuesta_{IdPregunta})
+                    if (kvp.Key.StartsWith("respuesta_") && !string.IsNullOrEmpty(kvp.Value))
+                    {
+                        string idPreguntaStr = kvp.Key.Replace("respuesta_", "");
+                        int idPregunta = int.TryParse(idPreguntaStr, out int idPreg) ? idPreg : 0;
+                        int nRespuesta = int.TryParse(kvp.Value, out int nResp) ? nResp : 0;
+
+                        // Buscar el comentario correspondiente a esta pregunta
+                        string comentarioPregunta = respuestas.TryGetValue($"comentario_{idPreguntaStr}", out string coment) ? coment : "";
+
+                        FL.InsertaRespuesta(idEvaluacion, idPregunta, nRespuesta, comentarioPregunta);
+                    }
+                }
+
+                // Registrar que el usuario contestó la encuesta
+                FL.InseRegistro(int.TryParse(idPersonal, out int idPers) ? idPers : 0);
+            }
 
             if (!success)
             {

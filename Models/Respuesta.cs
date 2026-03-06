@@ -4,20 +4,34 @@ using System.Collections.Generic;
 namespace EncuestasEvaluacionLiderazgo.Models
 {
     /// <summary>
-    /// Modelo que representa las respuestas de un usuario a una encuesta
+    /// Modelo que representa una evaluación de liderazgo
+    /// Corresponde a los parámetros del SP sp_inseEvaluacionDWH
     /// </summary>
     public class Respuesta
     {
-        public int Id { get; set; }
-        public int EncuestaId { get; set; }
-        public int UsuarioId { get; set; }
-        public DateTime FechaRespuesta { get; set; } = DateTime.Now;
-        public bool Completada { get; set; } = false;
+        /// <summary>Tipo de evaluación (sp: @IdTipoEvaluacion int)</summary>
+        public int IdTipoEvaluacion { get; set; }
 
-        // Relaciones
-        public virtual Encuesta Encuesta { get; set; }
-        public virtual Usuario Usuario { get; set; }
-        public virtual ICollection<RespuestaDetalle> Detalles { get; set; }
+        /// <summary>Id del centro en DWH (sp: @IdCentroDWH varchar(2))</summary>
+        public string IdCentroDWH { get; set; }
+
+        /// <summary>Id del jefe en DWH (sp: @IDPersonalDWH_Jefe int)</summary>
+        public int IDPersonalDWH_Jefe { get; set; }
+
+        /// <summary>Id de la persona evaluada en DWH (sp: @IDPersonalDWH_Evaluado int)</summary>
+        public int IDPersonalDWH_Evaluado { get; set; }
+
+        /// <summary>Nombre del evaluado (sp: @cNombreEvaluado varchar(100))</summary>
+        public string cNombreEvaluado { get; set; }
+
+        /// <summary>Comentarios de la evaluación (sp: @cComentarios varchar(1000))</summary>
+        public string cComentarios { get; set; }
+
+        /// <summary>Número de empleado del agente (sp: @nNoEmpAgente numeric)</summary>
+        public decimal nNoEmpAgente { get; set; }
+
+        /// <summary>Id de antigüedad / tiempo con el líder (sp: @IDAntig numeric)</summary>
+        public decimal IDAntig { get; set; }
     }
 
     /// <summary>

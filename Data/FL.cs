@@ -507,5 +507,59 @@ namespace EncuestasEvaluacionLiderazgo.Data
             }
         }
 
+        /// <summary>
+        /// Inserta una evaluación de liderazgo
+        /// </summary>
+        /// <param name="respuesta">Objeto Respuesta con los datos de la evaluación</param>
+        /// <returns>String con el resultado de la operación (ID de la evaluación insertada)</returns>
+        public static string InsertaEvaluacion(Respuesta respuesta)
+        {
+            try
+            {
+                return DL.InsertaEvaluacion(respuesta);
+            }
+            catch (Exception ex)
+            {
+                throw new Exception("Error al insertar evaluación: " + ex.Message);
+            }
+        }
+
+        /// <summary>
+        /// Inserta una respuesta de evaluación
+        /// </summary>
+        /// <param name="idEvaluacion">ID de la evaluación</param>
+        /// <param name="idPregunta">ID de la pregunta</param>
+        /// <param name="nRespuesta">Valor numérico de la respuesta (1-5)</param>
+        /// <param name="cComentarios">Comentarios de la respuesta</param>
+        /// <returns>String con el resultado de la operación</returns>
+        public static string InsertaRespuesta(int idEvaluacion, int idPregunta, int nRespuesta, string cComentarios)
+        {
+            try
+            {
+                return DL.InsertaRespuesta(idEvaluacion, idPregunta, nRespuesta, cComentarios);
+            }
+            catch (Exception ex)
+            {
+                throw new Exception("Error al insertar respuesta: " + ex.Message);
+            }
+        }
+
+        /// <summary>
+        /// Inserta un registro en tblContesto indicando que el usuario contestó la encuesta
+        /// </summary>
+        /// <param name="idPersonalDWH">ID del personal en DWH</param>
+        /// <returns>String con el ID del registro insertado</returns>
+        public static string InseRegistro(int idPersonalDWH)
+        {
+            try
+            {
+                return DL.InseRegistro(idPersonalDWH);
+            }
+            catch (Exception ex)
+            {
+                throw new Exception("Error al insertar registro: " + ex.Message);
+            }
+        }
+
     }
 }

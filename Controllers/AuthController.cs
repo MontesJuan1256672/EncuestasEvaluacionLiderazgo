@@ -3,6 +3,7 @@ using Microsoft.AspNetCore.Http;
 using System.Threading.Tasks;
 using EncuestasEvaluacionLiderazgo.Services;
 using EncuestasEvaluacionLiderazgo.Models;
+using EncuestasEvaluacionLiderazgo.Utilities;
 
 namespace EncuestasEvaluacionLiderazgo.Controllers
 {
@@ -20,7 +21,8 @@ namespace EncuestasEvaluacionLiderazgo.Controllers
 
         /// <summary>
         /// GET: /Auth/Login
-        /// Muestra la página de login
+        /// Muestra la página de login.
+        /// Recibe parámetros encriptados por QueryString: Id (idPersonal), loc (idCentro), mat (noEmp)
         /// </summary>
         [HttpGet]
         public IActionResult Login()
@@ -29,6 +31,39 @@ namespace EncuestasEvaluacionLiderazgo.Controllers
             if (User.Identity.IsAuthenticated)
             {
                 return RedirectToAction("Index", "Home");
+            }
+
+            //IdPersonalDWH=WeRac2RviU0%3d
+            //IdCentro=JBDCu2wqR68%3d
+            //noEmp=RYoAmK/HOdU=
+            //?Id=WeRac2RviU0%3d&loc=JBDCu2wqR68%3d&mat=RYoAmK/HOdU=
+            // Leer parámetros encriptados del QueryString
+            string idPersonal = Request.Query["Id"].ToString();
+            string idCentro = Request.Query["loc"].ToString();
+            string noEmp = Request.Query["mat"].ToString();
+
+            // Desencriptar parámetros si vienen en el QueryString
+            if (!string.IsNullOrEmpty(idPersonal) && !string.IsNullOrEmpty(idCentro) && !string.IsNullOrEmpty(noEmp))
+            {
+                try
+                {
+                    // Intentar desencriptar con TelvistaServices (AES)
+                    idPersonal = Desencripta.idPersonalDecrypt(idPersonal, "");
+                    idCentro = Desencripta.idPersonalDecrypt(idCentro, "");
+                    noEmp = Desencripta.idPersonalDecrypt(noEmp, "");
+                }
+                catch
+                {
+                    // Si falla, intentar desencriptar con CENTREX (DES)
+                    idPersonal = Desencripta.DecryptWitValueCENTREX("Id", idPersonal);
+                    idCentro = Desencripta.DecryptWitValueCENTREX("loc", idCentro);
+                    noEmp = Desencripta.DecryptWitValueCENTREX("mat", noEmp);
+                }
+
+                // Guardar datos desencriptados en Session para uso durante la sesión
+                HttpContext.Session.SetString("IdPersonal", idPersonal);
+                HttpContext.Session.SetString("IdCentro", idCentro);
+                HttpContext.Session.SetString("NoEmp", noEmp);
             }
 
             return View();
