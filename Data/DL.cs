@@ -1080,6 +1080,43 @@ namespace EncuestasEvaluacionLiderazgo.Data
             return resultado;
         }
 
+        /// <summary>
+        /// Obtiene los usuarios administradores activos
+        /// Ejecuta sp_traeUsuariosAdministradores
+        /// </summary>
+        /// <returns>DataSet con los usuarios administradores activos</returns>
+        public static DataSet TraeUsuariosAdministradores()
+        {
+            SqlCommand sqlcommand = null;
+            SqlDataAdapter sqldataadapter = null;
+            DataSet dataset = new DataSet();
+            try
+            {
+                sqlcommand = new SqlCommand("sp_traeUsuariosAdministradores", new SqlConnection(ConStr));
+                sqlcommand.CommandType = CommandType.StoredProcedure;
+                sqlcommand.CommandTimeout = 0;
+
+                sqldataadapter = new SqlDataAdapter(sqlcommand);
+                sqldataadapter.Fill(dataset);
+
+                return dataset;
+            }
+            catch (Exception ex)
+            {
+                throw new Exception("Error al obtener usuarios administradores: " + ex.Message);
+            }
+            finally
+            {
+                if (sqlcommand != null && sqlcommand.Connection != null)
+                {
+                    if (sqlcommand.Connection.State == ConnectionState.Open)
+                        sqlcommand.Connection.Close();
+                }
+                if (sqldataadapter != null)
+                    sqldataadapter.Dispose();
+            }
+        }
+
 
     }
 }

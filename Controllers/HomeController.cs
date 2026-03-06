@@ -1,5 +1,6 @@
 using System.Diagnostics;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Http;
 using EncuestasEvaluacionLiderazgo.Models;
 
 namespace EncuestasEvaluacionLiderazgo.Controllers;
@@ -15,6 +16,14 @@ public class HomeController : Controller
 
     public IActionResult Index()
     {
+        // Validar que el usuario esté autenticado
+        if (!HttpContext.Session.GetInt32("UserId").HasValue)
+            return RedirectToAction("Login", "Auth");
+
+        // Validar que sea administrador
+        if (HttpContext.Session.GetInt32("UserType") != (int)TipoUsuario.Administrador)
+            return RedirectToAction("Login", "Auth");
+
         return View();
     }
 

@@ -561,5 +561,21 @@ namespace EncuestasEvaluacionLiderazgo.Data
             }
         }
 
+        /// <summary>
+        /// Obtiene los usuarios administradores activos
+        /// </summary>
+        /// <returns>DataSet con los usuarios administradores</returns>
+        public static DataSet TraeUsuariosAdministradores()
+        {
+            try
+            {
+                return DL.TraeUsuariosAdministradores();
+            }
+            catch (Exception ex)
+            {
+                throw new Exception("Error al obtener usuarios administradores: " + ex.Message);
+            }
+        }
+
     }
 }

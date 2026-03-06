@@ -98,6 +98,9 @@ namespace EncuestasEvaluacionLiderazgo.Controllers
             if (!IsAuthenticated())
                 return RedirectToAction("Login", "Auth");
 
+            if (!IsAdmin())
+                return RedirectToAction("Login", "Auth");
+
             int userId = GetCurrentUserId();
             var encuestas = await _encuestaService.GetEncuestasAsync(userId);
 

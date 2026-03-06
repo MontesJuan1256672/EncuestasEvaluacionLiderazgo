@@ -1,9 +1,11 @@
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Mvc.Rendering;
 using Microsoft.AspNetCore.Http;
 using System.Threading.Tasks;
 using EncuestasEvaluacionLiderazgo.Services;
 using EncuestasEvaluacionLiderazgo.Models;
 using EncuestasEvaluacionLiderazgo.Utilities;
+using EncuestasEvaluacionLiderazgo.Data;
 
 namespace EncuestasEvaluacionLiderazgo.Controllers
 {
@@ -27,15 +29,21 @@ namespace EncuestasEvaluacionLiderazgo.Controllers
         [HttpGet]
         public IActionResult Login()
         {
+            /*GET muestra el formulario
+             * Lee los query strings encriptados, los desencripta, 
+             * los guarda en sesión y muestra la vista de login
+            */
+
             // Si el usuario ya está autenticado, redirigir al home
             if (User.Identity.IsAuthenticated)
             {
                 return RedirectToAction("Index", "Home");
             }
 
-            //IdPersonalDWH=WeRac2RviU0%3d
+            //IdPersonalDWH=WeRac2RviU0%3d              // 49395 = cE0rFzF1yTk=
             //IdCentro=JBDCu2wqR68%3d
-            //noEmp=RYoAmK/HOdU=
+            //noEmp=RYoAmK/HOdU=                        // 14532 = myN8m0ACXhvMihPlWAkr9w==    
+
             //?Id=WeRac2RviU0%3d&loc=JBDCu2wqR68%3d&mat=RYoAmK/HOdU=
             // Leer parámetros encriptados del QueryString
             string idPersonal = Request.Query["Id"].ToString();
@@ -66,7 +74,54 @@ namespace EncuestasEvaluacionLiderazgo.Controllers
                 HttpContext.Session.SetString("NoEmp", noEmp);
             }
 
+            // Cargar combos para la vista
+            CargarCombosLogin();
+
             return View();
+        }
+
+        /// <summary>
+        /// Carga los datos de los combos del formulario de login en ViewBag
+        /// </summary>
+        private void CargarCombosLogin()
+        {
+            try
+            {
+                var tiposEvaluacion = FL.TraeTiposEvaluacion();
+                ViewBag.TiposEvaluacion = tiposEvaluacion?.Tables.Count > 0 ? tiposEvaluacion.Tables[0] : null;
+            }
+            catch
+            {
+                ViewBag.TiposEvaluacion = null;
+            }
+
+            CargarCiudades();
+        }
+
+        /// <summary>
+        /// Carga la lista de ciudades/centros disponibles
+        /// </summary>
+        private void CargarCiudades()
+        {
+            try
+            {
+                var ciudades = new List<SelectListItem>
+                {
+                    new SelectListItem { Value = "", Text = "-- Seleccione ciudad --" },
+                    new SelectListItem { Value = "17", Text = "Tijuana" },
+                    new SelectListItem { Value = "18", Text = "Mexicali" },
+                    new SelectListItem { Value = "19", Text = "CDMX" }
+                };
+
+                ViewBag.Ciudades = ciudades;
+            }
+            catch (Exception ex)
+            {
+                ViewBag.Ciudades = new List<SelectListItem>
+                {
+                    new SelectListItem { Value = "", Text = "Error al cargar ciudades" }
+                };
+            }
         }
 
         /// <summary>
@@ -75,27 +130,114 @@ namespace EncuestasEvaluacionLiderazgo.Controllers
         /// </summary>
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public async Task<IActionResult> Login(LoginViewModel model)
+        public IActionResult Login(LoginViewModel model)
         {
-            if (!ModelState.IsValid)
+            try
             {
+                int tipoAcceso = int.TryParse(model.TipoAcceso, out int ta) ? ta : 1;
+
+                // Leer datos desencriptados de sesión (vienen del GET con query strings)
+                string idPersonal = HttpContext.Session.GetString("IdPersonal") ?? "";
+                string idCentro = HttpContext.Session.GetString("IdCentro") ?? "";
+                string noEmp = HttpContext.Session.GetString("NoEmp") ?? "";
+
+                // Guardar tipo de encuesta y centro en sesión
+                HttpContext.Session.SetString("IdTipoEnc", model.CmbTipoEnc ?? "");
+                HttpContext.Session.SetString("IdCentro", model.CmbCentro ?? "");
+                HttpContext.Session.SetString("TipoAcceso", tipoAcceso.ToString());
+
+                if (tipoAcceso == 1)
+                {
+                    // Acceso Empleado: validar clave de acceso
+                    if (string.IsNullOrWhiteSpace(model.TxtClave))
+                    {
+                        ModelState.AddModelError(string.Empty, "Favor de colocar la clave de acceso");
+                        CargarCombosLogin();
+                        return View(model);
+                    }
+
+                    // Validar clave contra BD: traer todos los tipos y filtrar por ID y clave
+                    var tiposEval = FL.TraeTiposEvaluacion();
+                    bool claveValida = false;
+                    if (tiposEval?.Tables.Count > 0 && tiposEval.Tables[0].Rows.Count > 0)
+                    {
+                        foreach (System.Data.DataRow row in tiposEval.Tables[0].Rows)
+                        {
+                            if (row["IdTipoEvaluacion"].ToString() == model.CmbTipoEnc
+                                && row["cClaveAcceso"].ToString().Trim() == model.TxtClave.Trim())
+                            {
+                                claveValida = true;
+                                break;
+                            }
+                        }
+                    }
+
+                    if (!claveValida)
+                    {
+                        ModelState.AddModelError(string.Empty, "Favor de colocar una clave de acceso válida");
+                        CargarCombosLogin();
+                        return View(model);
+                    }
+
+                    // Sesión para empleado
+                    HttpContext.Session.SetString("Termino", "False");
+                    HttpContext.Session.SetInt32("UserId", 1);
+                    HttpContext.Session.SetString("UserName", "Empleado");
+                    HttpContext.Session.SetInt32("UserType", (int)TipoUsuario.Empleado);
+
+                    // Si viene de servidor externo, guardar IdPersonalDWH; si no, "0"
+                    HttpContext.Session.SetString("IdPersonalDWH", string.IsNullOrEmpty(noEmp) ? "0" : noEmp);
+
+                    // Redirigir a la encuesta
+                    return RedirectToAction("Details", "Encuesta", new { id = 1, filtroTipo = model.CmbTipoEnc });
+                }
+                else if (tipoAcceso == 2)
+                {
+                    // Acceso Administrador: validar que el IdPersonal esté en la lista de autorizados
+                    var dsAdmins = FL.TraeUsuariosAdministradores();
+                    var administradoresAutorizados = new List<string>();
+                    if (dsAdmins?.Tables.Count > 0)
+                    {
+                        foreach (System.Data.DataRow row in dsAdmins.Tables[0].Rows)
+                        {
+                            administradoresAutorizados.Add(row["IdPErsonalDWH"].ToString().Trim());
+                        }
+                    }
+
+                    if (string.IsNullOrEmpty(idPersonal) || !administradoresAutorizados.Contains(idPersonal))
+                    {
+                        ModelState.AddModelError(string.Empty, "Acceso denegado. No tiene permisos de administrador.");
+                        CargarCombosLogin();
+                        return View(model);
+                    }
+
+                    HttpContext.Session.SetString("IdPersonalDWH", idPersonal);
+                    HttpContext.Session.SetInt32("UserId", 1);
+                    HttpContext.Session.SetString("UserName", "Administrador");
+                    HttpContext.Session.SetInt32("UserType", (int)TipoUsuario.Administrador);
+
+                    return RedirectToAction("Index", "Home");
+                }
+                else if (tipoAcceso == 3)
+                {
+                    // Acceso Consulta
+                    HttpContext.Session.SetInt32("UserId", 1);
+                    HttpContext.Session.SetString("UserName", "Consulta");
+                    HttpContext.Session.SetInt32("UserType", (int)TipoUsuario.Consulta);
+
+                    return RedirectToAction("Index", "Reportes");
+                }
+
+                ModelState.AddModelError(string.Empty, "Tipo de acceso no válido");
+                CargarCombosLogin();
                 return View(model);
             }
-
-            var (success, message, usuario) = await _authService.LoginAsync(model.Email, model.Contraseña);
-
-            if (!success)
+            catch (Exception ex)
             {
-                ModelState.AddModelError(string.Empty, message);
+                ModelState.AddModelError(string.Empty, "Error en página: " + ex.Message);
+                CargarCombosLogin();
                 return View(model);
             }
-
-            // Guardar información del usuario en la sesión
-            HttpContext.Session.SetInt32("UserId", usuario.Id);
-            HttpContext.Session.SetString("UserName", usuario.Nombre);
-            HttpContext.Session.SetInt32("UserType", (int)usuario.TipoUsuario);
-
-            return RedirectToAction("Index", "Home");
         }
 
         /// <summary>
@@ -155,8 +297,10 @@ namespace EncuestasEvaluacionLiderazgo.Controllers
     /// </summary>
     public class LoginViewModel
     {
-        public string Email { get; set; }
-        public string Contraseña { get; set; }
+        public string TipoAcceso { get; set; }
+        public string CmbTipoEnc { get; set; }
+        public string CmbCentro { get; set; }
+        public string TxtClave { get; set; }
     }
 
     /// <summary>

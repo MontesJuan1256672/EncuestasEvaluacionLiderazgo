@@ -28,7 +28,9 @@ namespace EncuestasEvaluacionLiderazgo.Models
     /// </summary>
     public enum TipoUsuario
     {
+        Empleado = 0,
         Administrador = 1,
-        Evaluador = 2
+        Evaluador = 2,
+        Consulta = 3
     }
 }
