@@ -40,34 +40,12 @@ namespace EncuestasEvaluacionLiderazgo.Data
         }
 
         /// <summary>
-        /// Obtiene la cadena de conexión principal usando la lógica de negocio
-        /// </summary>
-        /// <returns>Cadena de conexión válida</returns>
-        private static string CS_ConStr()
-        {
-            // Producción - Obtiene la cadena de conexión disponible
-            return FL.GetWebServiceAvailable("438A9C25-EB3F-4816-9792-809B147BAA70", 4, true, false);
-        }
-
-        /// <summary>
         /// Abre una conexión SQL con la cadena de conexión principal
         /// </summary>
         /// <returns>SqlConnection abierta</returns>
         private static SqlConnection GetConnection()
         {
             SqlConnection Conn = new SqlConnection(ConStr);
-            Conn.Open();
-            return Conn;
-        }
-
-        /// <summary>
-        /// Abre una conexión SQL con una cadena de conexión específica
-        /// </summary>
-        /// <param name="myconn">Cadena de conexión personalizada</param>
-        /// <returns>SqlConnection abierta</returns>
-        private static SqlConnection GetConnection2(string myconn)
-        {
-            SqlConnection Conn = new SqlConnection(myconn);
             Conn.Open();
             return Conn;
         }
@@ -1117,6 +1095,185 @@ namespace EncuestasEvaluacionLiderazgo.Data
             }
         }
 
+        /// <summary>
+        /// Obtiene los comentarios por evaluación
+        /// Ejecuta sp_TraePersonalContestoEncuesta
+        /// </summary>
+        public static DataSet TraeComentariosPorEvaluacion(int idTipoEvaluacion, DateTime fechaInicial, DateTime fechaFinal, string nombreEvaluado, int idCentroDWH)
+        {
+            using (SqlConnection conn = new SqlConnection(ConStr))
+            using (SqlCommand sqlCommand = new SqlCommand("sp_TraeComentariosPorEvaluacion", conn))
+            {
+                sqlCommand.CommandType = CommandType.StoredProcedure;
+                sqlCommand.CommandTimeout = 0;
+
+                sqlCommand.Parameters.Add("@idTipoEvaluacion", SqlDbType.Int).Value = idTipoEvaluacion;
+                sqlCommand.Parameters.Add("@FechaInicial", SqlDbType.VarChar).Value = fechaInicial.ToString("yyyyMMdd");
+                sqlCommand.Parameters.Add("@FechaFinal", SqlDbType.VarChar).Value = fechaFinal.ToString("yyyyMMdd");
+                sqlCommand.Parameters.Add("@cNombreEvaluado", SqlDbType.VarChar).Value = nombreEvaluado ?? "";
+                sqlCommand.Parameters.Add("@IDCentroDWH", SqlDbType.Int).Value = idCentroDWH;
+
+                DataSet dataset = new DataSet();
+                using (SqlDataAdapter adapter = new SqlDataAdapter(sqlCommand))
+                {
+                    adapter.Fill(dataset);
+                    return dataset;
+                }
+            }
+        }
+
+        /// <summary>
+        /// Obtiene las actividades por encuesta
+        /// Ejecuta sp_TraeActividadesPorEncuesta
+        /// </summary>
+        public static DataSet TraeActividadesPorEncuesta(int idTipoEvaluacion)
+        {
+            SqlCommand sqlcommand = null;
+            SqlDataAdapter sqldataadapter = null;
+            DataSet dataset = new DataSet();
+            try
+            {
+                sqlcommand = new SqlCommand("sp_TraeActividadesPorEncuesta", new SqlConnection(ConStr));
+                sqlcommand.CommandType = CommandType.StoredProcedure;
+                sqlcommand.CommandTimeout = 0;
+
+                sqlcommand.Parameters.Add("@idTipoEvaluacion", SqlDbType.Int).Value = idTipoEvaluacion;
+
+                sqldataadapter = new SqlDataAdapter(sqlcommand);
+                sqldataadapter.Fill(dataset);
+
+                return dataset;
+            }
+            catch (Exception ex)
+            {
+                throw new Exception("Error en TraeActividadesPorEncuesta: " + ex.Message);
+            }
+            finally
+            {
+                if (sqlcommand != null && sqlcommand.Connection != null)
+                {
+                    if (sqlcommand.Connection.State == ConnectionState.Open)
+                        sqlcommand.Connection.Close();
+                }
+                if (sqldataadapter != null)
+                    sqldataadapter.Dispose();
+            }
+        }
+
+        /// <summary>
+        /// Obtiene los promedios de evaluación por competencia
+        /// Ejecuta sp_traeRepPromediosIV
+        /// </summary>
+        public static DataSet TraeRepPromediosDWH(string idPersonalJefe, int idCentroDWH, string idPersonalEvaluado, int idTipoEvaluacion, DateTime fechaIni, DateTime fechaFin)
+        {
+            SqlCommand sqlcommand = null;
+            SqlDataAdapter sqldataadapter = null;
+            DataSet dataset = new DataSet();
+            try
+            {
+                sqlcommand = new SqlCommand("sp_traeRepPromediosIV", new SqlConnection(ConStr));
+                sqlcommand.CommandType = CommandType.StoredProcedure;
+                sqlcommand.CommandTimeout = 0;
+
+                sqlcommand.Parameters.Add("@IdPersonal_Jefe", SqlDbType.VarChar, 6).Value = idPersonalJefe ?? "";
+                sqlcommand.Parameters.Add("@IDCentroDWH", SqlDbType.Int).Value = idCentroDWH;
+                sqlcommand.Parameters.Add("@IDPersonalDWH_Evaluado", SqlDbType.VarChar, 6).Value = idPersonalEvaluado ?? "";
+                sqlcommand.Parameters.Add("@IdTipoEvaluacion", SqlDbType.Int).Value = idTipoEvaluacion;
+                sqlcommand.Parameters.Add("@FechaIni", SqlDbType.VarChar, 10).Value = fechaIni.ToString("yyyyMMdd");
+                sqlcommand.Parameters.Add("@FechaFin", SqlDbType.VarChar, 10).Value = fechaFin.ToString("yyyyMMdd");
+
+                sqldataadapter = new SqlDataAdapter(sqlcommand);
+                sqldataadapter.Fill(dataset);
+
+                return dataset;
+            }
+            catch (Exception ex)
+            {
+                throw new Exception("Error en TraeRepPromediosDWH: " + ex.Message);
+            }
+            finally
+            {
+                if (sqlcommand != null && sqlcommand.Connection != null)
+                {
+                    if (sqlcommand.Connection.State == ConnectionState.Open)
+                        sqlcommand.Connection.Close();
+                }
+                if (sqldataadapter != null)
+                    sqldataadapter.Dispose();
+            }
+        }
+
+
+        /// <summary>        
+        /// Obtiene los promedios de evaluación por competencia desde DWH con fechas en formato string
+        /// Ejecuta sp_traeRepPromediosIV     
+        /// </summary>
+        public static string TraeTotalEncuestas(int idTipoEvaluacion, int idPersonalDWH, int idCentroDWH, DateTime fechaIni, DateTime fechaFin)
+        {
+            SqlCommand sqlcommand = null;
+            try
+            {
+                sqlcommand = new SqlCommand("sp_TraeTotalEncuestas", new SqlConnection(ConStr));
+                sqlcommand.CommandType = CommandType.StoredProcedure;
+                sqlcommand.CommandTimeout = 0;
+
+                sqlcommand.Parameters.Add("@IdPersonalDWH", SqlDbType.Int).Value = idPersonalDWH;
+                sqlcommand.Parameters.Add("@IDCentroDWH", SqlDbType.Int).Value = idCentroDWH;
+                sqlcommand.Parameters.Add("@IdTipoEvaluacion", SqlDbType.Int).Value = idTipoEvaluacion;
+                sqlcommand.Parameters.Add("@FechaInicial", SqlDbType.VarChar, 10).Value = fechaIni.ToString("yyyyMMdd");
+                sqlcommand.Parameters.Add("@FechaFinal", SqlDbType.VarChar, 10).Value = fechaFin.ToString("yyyyMMdd");
+
+                sqlcommand.Connection.Open();
+                var result = sqlcommand.ExecuteScalar();
+                return result != null ? result.ToString() : "0";
+            }
+            catch (Exception ex)
+            {
+                throw new Exception("Error en TraeTotalEncuestas: " + ex.Message);
+            }
+            finally
+            {
+                if (sqlcommand != null && sqlcommand.Connection != null)
+                {
+                    if (sqlcommand.Connection.State == ConnectionState.Open)
+                        sqlcommand.Connection.Close();
+                }
+            }
+        }
+
+        /// <summary>
+        /// Obtiene las PROMEDIO POR PREGUNTA de evaluación 
+        /// EJECUTA sp_traeRepPromedios*Pregunta2
+        /// </summary>
+        public static DataTable TraeRepPromediosPreguntaDWH(string IDPersonalDWH_Jefe, string IDPersonalDWH_Evaluado, string IdTipoEvaluacion, string IdCentroDWH, DateTime FechaIni, DateTime FechaFin, int AgentesEncuestados)
+        {
+            using (SqlConnection conn = new SqlConnection(ConStr))
+            using (SqlCommand sqlCommand = new SqlCommand("sp_traeRepPromedios*Pregunta2", conn))
+            {
+                sqlCommand.CommandType = CommandType.StoredProcedure;
+                sqlCommand.CommandTimeout = 0;
+
+                sqlCommand.Parameters.Add("@IDPersonalDWH_Jefe ", SqlDbType.VarChar, 6).Value = IDPersonalDWH_Jefe ?? "";
+                sqlCommand.Parameters.Add("@IDPersonalDWH_Evaluado", SqlDbType.VarChar, 6).Value = IDPersonalDWH_Evaluado ?? "";
+                sqlCommand.Parameters.Add("@IdTipoEvaluacion", SqlDbType.Int).Value = int.TryParse(IdTipoEvaluacion, out int idEval) ? idEval : 0;
+                sqlCommand.Parameters.Add("@IDCentroDWH ", SqlDbType.Int).Value = int.TryParse(IdCentroDWH, out int idCentro) ? idCentro : 0;
+                sqlCommand.Parameters.Add("@FechaIni", SqlDbType.VarChar, 10).Value = FechaIni.ToString("yyyyMMdd");
+                sqlCommand.Parameters.Add("@FechaFin", SqlDbType.VarChar, 10).Value = FechaFin.ToString("yyyyMMdd");
+                sqlCommand.Parameters.Add("@AgeEncuestados", SqlDbType.Int).Value = AgentesEncuestados;
+
+                DataTable dt = new DataTable();
+                using (SqlDataAdapter adapter = new SqlDataAdapter(sqlCommand))
+                {
+                    adapter.Fill(dt);
+                    return dt;
+                }
+            }
+        }
 
     }
 }
+
+
+
+
+///   

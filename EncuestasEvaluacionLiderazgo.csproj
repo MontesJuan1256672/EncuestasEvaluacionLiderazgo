@@ -20,6 +20,7 @@
   </ItemGroup>
   <ItemGroup>
     <PackageReference Include="Microsoft.Data.SqlClient" Version="6.1.4" />
+    <PackageReference Include="ClosedXML" Version="0.102.1" />
   </ItemGroup>
 
 </Project>

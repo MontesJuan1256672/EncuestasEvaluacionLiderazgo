@@ -19,7 +19,10 @@
 │  ✅ Documentación completa                                                 │
 │  ✅ Código escalable y mantenible                                          │
 │  ✅ Listo para testing                                                     │
-│  ✅ Preparado para integración con BD                                      │
+│  ✅ Integración con BD (SQL Server vía DL.cs / FL.cs)                      │
+│  ✅ Gestión de personas a evaluar                                          │
+│  ✅ Módulo de reportes                                                     │
+│  ✅ Encriptación/desencriptación (DES, AES)                                │
 │                                                                             │
 └─────────────────────────────────────────────────────────────────────────────┘
 
@@ -32,7 +35,9 @@
 │  │   ├── AuthController.cs              → Autenticación                     │
 │  │   ├── EncuestaController.cs          → Encuestas (lectura)              │
 │  │   ├── EditaEncuestaController.cs     → Encuestas (edición)              │
-│  │   └── HomeController.cs              → Página de inicio                 │
+│  │   ├── HomeController.cs              → Página de inicio                 │
+│  │   ├── PersonasEvaluarController.cs   → Gestión personas a evaluar       │
+│  │   └── ReportesController.cs          → Reportes y consultas             │
 │  │                                                                         │
 │  ├── 💼 Services/                                                           │
 │  │   ├── IAuthService.cs / AuthService.cs                                  │
@@ -40,33 +45,50 @@
 │  │   └── IRespuestaService.cs / RespuestaService.cs                        │
 │  │                                                                         │
 │  ├── 📊 Models/                                                             │
-│  │   ├── Usuario.cs                     → Usuario (Admin, Evaluador)       │
+│  │   ├── Usuario.cs                     → Usuario (4 tipos)                │
 │  │   ├── Encuesta.cs                    → Encuesta                         │
 │  │   ├── Pregunta.cs                    → Pregunta (5 tipos)               │
 │  │   ├── OpcionRespuesta.cs             → Opciones                         │
-│  │   └── Respuesta.cs                   → Respuestas de usuarios           │
+│  │   ├── Respuesta.cs                   → Respuestas de usuarios           │
+│  │   ├── PersonaEvaluar.cs              → Persona a evaluar                │
+│  │   ├── EncuestaIndexViewModel.cs      → ViewModel listado encuestas      │
+│  │   ├── EncuestaDetailsViewModel.cs    → ViewModel detalle encuesta       │
+│  │   ├── ReportesIndexViewModel.cs      → ViewModel reportes               │
+│  │   └── ErrorViewModel.cs              → ViewModel de errores             │
 │  │                                                                         │
 │  ├── 🎨 Views/                                                              │
 │  │   ├── Auth/                          → Login, Register                  │
 │  │   ├── Encuesta/                      → Index, Details, Create           │
 │  │   ├── EditaEncuesta/                 → Index (edición)                  │
-│  │   └── Shared/                        → Layout, componentes              │
+│  │   ├── Home/                          → Index, Privacy                   │
+│  │   ├── PersonasEvaluar/               → Index, Create                    │
+│  │   ├── Reportes/                      → Index                            │
+│  │   └── Shared/                        → Layout, Error, componentes       │
 │  │                                                                         │
 │  ├── 🔧 Utilities/                                                         │
-│  │   └── SessionHelper.cs               → Helpers de sesión                 │
+│  │   ├── SessionHelper.cs               → Helpers de sesión                 │
+│  │   └── Desencripta.cs                 → Encriptación/desencriptación      │
+│  │                                                                          │
+│  ├── 💾 Data/                                                               │
+│  │   ├── DL.cs                          → Capa de acceso a datos (SQL)      │
+│  │   └── FL.cs                          → Capa de lógica de negocio         │
 │  │                                                                          │
 │  ├── 📚 Documentación/                                                      │
 │  │   ├── README.md                      → Guía de inicio                    │
 │  │   ├── DOCUMENTACION.md               → Documentación técnica             │
 │  │   ├── BUENAS_PRACTICAS.md            → Patrones implementados            │
-│  │   ├── MEJORAS_FUTURAS.cs             → Plan de mejoras                   │
-│  │   ├── EJEMPLOS_SERVICIOS.cs          → Ejemplos de uso                   │
+│  │   ├── MEJORAS_FUTURAS.txt            → Plan de mejoras                   │
+│  │   ├── EJEMPLOS_SERVICIOS.txt         → Ejemplos de uso                   │
 │  │   ├── PRUEBAS.md                     → Checklist de testing              │
-│  │   └── RESUMEN_PROYECTO.md            → Este archivo                      │
+│  │   ├── RESUMEN_PROYECTO.md            → Resumen del proyecto              │
+│  │   ├── INDICE.md                      → Índice de documentación           │
+│  │   ├── INICIO_RAPIDO.md               → Guía de inicio rápido            │
+│  │   └── DIAGRAMA_PROYECTO.txt          → Este archivo                      │
 │  │                                                                          │
 │  ├── 📁 wwwroot/                                                           │
 │  │   ├── css/                           → Estilos CSS                       │
-│  │   └── js/                            → JavaScript                        │
+│  │   ├── js/                            → JavaScript                        │
+│  │   └── lib/                           → Bootstrap, jQuery, validaciones   │
 │  │                                                                          │
 │  ├── Program.cs                        → Configuración principal            │
 │  └── appsettings.json                  → Configuración                      │
@@ -104,13 +126,13 @@
 ├─────────────────────────────────────────────────────────────────────────────┤
 │                                                                             │
 │  🔐 /Auth/Login                                                             │
-│     Formulario de inicio de sesión                                         │
-│     Campos: Email, Contraseña                                              │
-│     Validaciones: Email, Contraseña requerida                              │
+│     Formulario de inicio de sesión                                          │
+│     Campos: Email, Contraseña                                               │
+│     Validaciones: Email, Contraseña requerida                               │
 │                                                                             │
 │  🔐 /Auth/Register                                                          │
-│     Formulario de registro                                                 │
-│     Campos: Nombre, Email, Contraseña, Tipo Usuario                       │
+│     Formulario de registro                                                  │
+│     Campos: Nombre, Email, Contraseña, Tipo Usuario                         │
 │     Validaciones: Todos requeridos, Passwords deben coincidir              │
 │                                                                             │
 │  📋 /Encuesta/Index                                                         │
@@ -133,6 +155,23 @@
 │     Tabs: Detalles, Preguntas, Respuestas                                 │
 │     Acciones: Guardar, Publicar, Eliminar                                 │
 │                                                                             │
+│  🏠 /Home/Index                                                             │
+│     Dashboard principal (solo administradores)                              │
+│     Acceso restringido por rol                                              │
+│                                                                             │
+│  👥 /PersonasEvaluar/Index                                                  │
+│     Listado de personas a evaluar                                          │
+│     Filtros: Tipo de evaluación                                             │
+│     Acciones: Ver, Agregar persona                                         │
+│                                                                             │
+│  ➕ /PersonasEvaluar/Create                                                 │
+│     Agregar persona a evaluar                                              │
+│     Campos: Número empleado, Ciudad, Tipo evaluación                       │
+│                                                                             │
+│  📊 /Reportes/Index                                                         │
+│     Reportes de evaluaciones                                               │
+│     Filtros: Tipo evaluación, Fechas, Persona evaluada                     │
+│                                                                             │
 └─────────────────────────────────────────────────────────────────────────────┘
 
 ┌─────────────────────────────────────────────────────────────────────────────┐
@@ -140,10 +179,10 @@
 ├─────────────────────────────────────────────────────────────────────────────┤
 │                                                                             │
 │  TipoUsuario:                            EstadoEncuesta:                   │
-│  ├── Administrador (1)                   ├── Borrador (1)                  │
-│  └── Evaluador (2)                       ├── Publicada (2)                 │
-│                                          ├── Cerrada (3)                   │
-│                                          └── Archivada (4)                 │
+│  ├── Empleado (0)                        ├── Borrador (1)                  │
+│  ├── Administrador (1)                   ├── Publicada (2)                 │
+│  ├── Evaluador (2)                       ├── Cerrada (3)                   │
+│  └── Consulta (3)                        └── Archivada (4)                 │
 │                                                                             │
 │  TipoPregunta:                                                              │
 │  ├── TextoCorto (1)     → Input text                                       │
@@ -170,18 +209,19 @@
 │                         📈 ESTADÍSTICAS DEL PROYECTO                        │
 ├─────────────────────────────────────────────────────────────────────────────┤
 │                                                                             │
-│  Controllers:           4 archivos                                          │
+│  Controllers:           6 archivos                                          │
 │  Services:              6 archivos (3 interfaces + 3 implementaciones)      │
-│  Models:                5 archivos                                          │
-│  Views:                 6 archivos Razor                                    │
-│  Utilidades:            1 archivo                                           │
-│  Documentación:         7 archivos                                          │
+│  Models:               10 archivos (5 entidades + 4 ViewModels + Error)     │
+│  Views:                12+ archivos Razor (7 carpetas)                      │
+│  Data:                  2 archivos (DL.cs + FL.cs)                          │
+│  Utilidades:            2 archivos                                          │
+│  Documentación:        10 archivos                                          │
 │                                                                             │
-│  Total de líneas de código: ~3,000+                                        │
-│  Total de archivos: 32+                                                    │
+│  Total de líneas de código: ~5,000+                                        │
+│  Total de archivos: 48+                                                    │
 │                                                                             │
-│  Métodos implementados: 40+                                                 │
-│  Vistas Razor: 6 páginas                                                    │
+│  Métodos implementados: 60+                                                 │
+│  Vistas Razor: 12+ páginas                                                  │
 │  Componentes reutilizables: 10+                                            │
 │                                                                             │
 └─────────────────────────────────────────────────────────────────────────────┘
@@ -230,8 +270,11 @@
 │  ✅ README.md                                                              │
 │  ✅ DOCUMENTACION.md técnica                                               │
 │  ✅ BUENAS_PRACTICAS.md                                                    │
-│  ✅ EJEMPLOS_SERVICIOS.cs                                                  │
+│  ✅ EJEMPLOS_SERVICIOS.txt                                                 │
 │  ✅ PRUEBAS.md                                                             │
+│  ✅ INDICE.md                                                              │
+│  ✅ INICIO_RAPIDO.md                                                       │
+│  ✅ DIAGRAMA_PROYECTO.txt                                                  │
 │  ✅ Comentarios XML en código                                              │
 │                                                                             │
 └─────────────────────────────────────────────────────────────────────────────┘
@@ -285,8 +328,11 @@
 │  • README.md - Inicio rápido                                               │
 │  • DOCUMENTACION.md - Documentación técnica                                │
 │  • BUENAS_PRACTICAS.md - Patrones implementados                            │
-│  • MEJORAS_FUTURAS.cs - Plan de escalabilidad                              │
-│  • EJEMPLOS_SERVICIOS.cs - Ejemplos de uso                                 │
+│  • MEJORAS_FUTURAS.txt - Plan de escalabilidad                             │
+│  • EJEMPLOS_SERVICIOS.txt - Ejemplos de uso                                │
+│  • INDICE.md - Índice de documentación                                     │
+│  • INICIO_RAPIDO.md - Guía de inicio rápido                               │
+│  • DIAGRAMA_PROYECTO.txt - Diagrama del proyecto                           │
 │                                                                             │
 └─────────────────────────────────────────────────────────────────────────────┘
 

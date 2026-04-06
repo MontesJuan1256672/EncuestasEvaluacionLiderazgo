@@ -11,84 +11,240 @@
         <p class="text-gray-600">Análisis detallado de respuestas y evaluaciones de liderazgo</p>
     </div>
 
+    <!-- Mensaje de error -->
+    @if (TempData["Error"] != null)
+    {
+        <div class="bg-red-50 border-l-4 border-red-500 p-4 mb-6 rounded">
+            <p class="text-red-700 font-medium">⚠️ @TempData["Error"]</p>
+        </div>
+    }
+
     <!-- Filtros de Búsqueda -->
     <div class="bg-white p-6 rounded-lg shadow-md mb-8">
         <h2 class="text-2xl font-bold text-gray-900 mb-4">🔍 Filtros de Búsqueda</h2>
-        <form method="get" asp-action="Index" class="grid md:grid-cols-4 gap-4">
-            <!-- Tipo de Reporte -->
+        <form method="post" asp-action="Buscar" class="space-y-5">
+            <!-- Fila 1: Tipo de Reporte -->
             <div>
                 <label for="tipoReporte" class="block text-gray-700 font-bold mb-2">Tipo de Reporte</label>
                 <select id="tipoReporte" name="tipoReporte"
-                        class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500">
+                        class="w-full md:w-1/3 px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500">
                     <option value="">-- Seleccione --</option>
                     <option value="1">Reporte Normal</option>
                     <option value="2">Reporte Histórico</option>
                 </select>
             </div>
 
-            <!-- Encuesta -->
-            <div>
-                <label for="encuestaId" class="block text-gray-700 font-bold mb-2">Encuesta</label>
-                <select asp-for="EncuestaId" asp-items="Model.TiposEvaluacion" id="encuestaId"
-                        class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500">
-                </select>
+            <!-- Fila 2: Filtros de la encuesta -->
+            <div class="grid md:grid-cols-3 gap-4">
+                <div>
+                    <label for="encuestaId" class="block text-gray-700 font-bold mb-2">Encuesta</label>
+                    <select asp-for="EncuestaId" asp-items="Model.TiposEvaluacion" id="encuestaId"
+                            class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500">
+                    </select>
+                </div>
+                <div>
+                    <label for="ciudad" class="block text-gray-700 font-bold mb-2">Ciudad</label>
+                    <select id="ciudad" name="ciudad" asp-items="ViewBag.Ciudades"
+                            class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500">
+                    </select>
+                </div>
+                <div>
+                    <label for="personaEvaluar" class="block text-gray-700 font-bold mb-2">
+                        Persona a Evaluar <span id="tipoEvaluacionLabel" class="text-blue-600"></span>
+                    </label>
+                    <label class="flex items-center gap-2 whitespace-nowrap">
+                        <input type="checkbox" id="todoPersonas" name="todoPersonasCheck"
+                                class="w-4 h-4 accent-blue-600 cursor-pointer" />
+                        <span class="text-gray-700 font-medium">Todos</span>
+                    </label>
+                    <div class="flex gap-4 items-end">
+                        <select id="personaEvaluar" name="personaEvaluar"
+                                class="flex-1 px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500">
+                            <option value="">-- Seleccione --</option>
+                        </select>
+                    </div>
+                    <input type="hidden" id="PersonaEvaluarText" name="PersonaEvaluarText" />
+                    <input type="hidden" id="NoEmp" name="NoEmp" />
+                    <input type="hidden" id="TodoPersonas" name="TodoPersonas" value="false" />
+                </div>
             </div>
 
-            <!-- Ciudad -->
-            <div>
-                <label for="ciudad" class="block text-gray-700 font-bold mb-2">Ciudad</label>
-                <select id="ciudad" name="ciudad" asp-items="ViewBag.Ciudades"
-                        class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500">
-                </select>
+            <!-- Fila 3: Período -->
+            <div class="grid md:grid-cols-3 gap-4">
+                <div>
+                    <label for="fechaInicio" class="block text-gray-700 font-bold mb-2">Fecha Inicio</label>
+                    <input asp-for="FechaInicio" type="date"
+                           class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500" />
+                </div>
+                <div>
+                    <label for="fechaFinal" class="block text-gray-700 font-bold mb-2">Fecha Final</label>
+                    <input asp-for="FechaFinal" type="date"
+                           class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500" />
+                </div>
             </div>
 
-            <!-- Período -->
-            <div>
-                <label for="fechaInicio" class="block text-gray-700 font-bold mb-2">Fecha Inicio</label>
-                <input asp-for="FechaInicio" type="date"
-                       class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500" />
-            </div>
-
-            <div>
-                <label for="fechaFinal" class="block text-gray-700 font-bold mb-2">Fecha Final</label>
-                <input asp-for="FechaFinal" type="date"
-                       class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500" />
-            </div>
-
-
-
-            <!-- Persona a Evaluar -->
-            <div>
-                <label for="personaEvaluar" class="block text-gray-700 font-bold mb-2">
-                    Persona a Evaluar <span id="tipoEvaluacionLabel" class="text-blue-600"></span>
-                </label>
-                <select id="personaEvaluar" name="personaEvaluar"
-                        class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500">
-                    <option value="">-- Seleccione --</option>
-                </select>
-            </div>
-
-            <!-- Botones -->
-            <div class="flex items-end gap-2">
-                <button type="submit" class="flex-1 bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition font-bold">
-                    🔍 Buscar
-                </button>
-                <button type="reset" class="flex-1 bg-gray-300 text-gray-800 px-4 py-2 rounded-lg hover:bg-gray-400 transition font-bold">
+            <!-- Fila 4: Botones -->
+            <div class="flex justify-end gap-3 pt-2">
+                <button type="reset" class="bg-gray-300 text-gray-800 px-6 py-2 rounded-lg hover:bg-gray-400 transition font-bold">
                     ↻ Limpiar
+                </button>
+                <button type="submit" class="bg-blue-600 text-white px-6 py-2 rounded-lg hover:bg-blue-700 transition font-bold">
+                    🔍 Buscar
                 </button>
             </div>
         </form>
     </div>
 
+    <!-- Sección de Resultados -->
+    @if (Model.ReporteDePromedios != null && Model.ReporteDePromedios.Rows.Count > 0)
+    {
+        <div class="bg-white p-6 rounded-lg shadow-md mb-8">
+            <h2 class="text-2xl font-bold text-gray-900 mb-4">📋 Resultados del Reporte</h2>
+            <div class="overflow-x-auto">
+                <table class="w-full border-collapse border border-gray-300">
+                    <thead class="bg-blue-600 text-white">
+                        <tr>
+                            @foreach (System.Data.DataColumn column in Model.ReporteDePromedios.Columns)
+                            {
+                                <th class="border border-gray-300 px-4 py-2 text-left">@column.ColumnName</th>
+                            }
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach (System.Data.DataRow row in Model.ReporteDePromedios.Rows)
+                        {
+                            <tr class="hover:bg-gray-100">
+                                @foreach (System.Data.DataColumn column in Model.ReporteDePromedios.Columns)
+                                {
+                                    <td class="border border-gray-300 px-4 py-2">
+                                        @{
+                                            var value = row[column.ColumnName];
+                                            if (value == null || value is DBNull)
+                                            {
+                                                @("N/A")
+                                            }
+                                            else if (column.DataType == typeof(decimal))
+                                            {
+                                                @Convert.ToDecimal(value).ToString("F2")
+                                            }
+                                            else
+                                            {
+                                                @value.ToString()
+                                            }
+                                        }
+                                    </td>
+                                }
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    }
+
+    <!-- Sección de Agentes que Contestaron Encuesta -->
+    @if (Model.AgentesQueContestaronEncuesta != null && Model.AgentesQueContestaronEncuesta.Rows.Count > 0)
+    {
+        <div class="bg-white p-6 rounded-lg shadow-md mb-8">
+            <h2 class="text-2xl font-bold text-gray-900 mb-4">👥 Agentes que Contestaron la Encuesta</h2>
+            <div class="overflow-x-auto">
+                <table class="w-full border-collapse border border-gray-300">
+                    <thead class="bg-green-600 text-white">
+                        <tr>
+                            @foreach (System.Data.DataColumn column in Model.AgentesQueContestaronEncuesta.Columns)
+                            {
+                                <th class="border border-gray-300 px-4 py-2 text-left">@column.ColumnName</th>
+                            }
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach (System.Data.DataRow row in Model.AgentesQueContestaronEncuesta.Rows)
+                        {
+                            <tr class="hover:bg-gray-100">
+                                @foreach (System.Data.DataColumn column in Model.AgentesQueContestaronEncuesta.Columns)
+                                {
+                                    <td class="border border-gray-300 px-4 py-2">
+                                        @{
+                                            var value = row[column.ColumnName];
+                                            if (value == null || value is DBNull)
+                                            {
+                                                @("N/A")
+                                            }
+                                            else if (column.DataType == typeof(decimal))
+                                            {
+                                                @Convert.ToDecimal(value).ToString("F2")
+                                            }
+                                            else
+                                            {
+                                                @value.ToString()
+                                            }
+                                        }
+                                    </td>
+                                }
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    }
+
     <!-- Botones de Acción -->
     <div class="flex gap-4">
-         <a asp-controller="Home" asp-action="Index" class="bg-gray-300 text-gray-800 px-6 py-3 rounded-lg hover:bg-gray-400 transition font-bold">
+        <button type="button" id="btnDescargarReporte" class="bg-green-600 text-white px-6 py-3 rounded-lg hover:bg-green-700 transition font-bold" disabled>
+            📥 Descargar Reporte Excel
+        </button>
+        <a asp-controller="Home" asp-action="Index" class="bg-gray-300 text-gray-800 px-6 py-3 rounded-lg hover:bg-gray-400 transition font-bold">
             ← Volver al Inicio
         </a>
     </div>
 </div>
 
 <script>
+    // Manejar checkbox "Todos"
+    const todoCheckbox = document.getElementById('todoPersonas');
+    const personaSelect = document.getElementById('personaEvaluar');
+    const todoHidden = document.getElementById('TodoPersonas');
+
+    // Evento cuando cambia el checkbox
+    todoCheckbox.addEventListener('change', function() {
+        if (this.checked) {
+            // Marcar "Todos"
+            personaSelect.disabled = true;
+            personaSelect.value = '';
+            document.getElementById('PersonaEvaluarText').value = '';
+            document.getElementById('NoEmp').value = '';
+            todoHidden.value = 'true';
+        } else {
+            // Desmarcar "Todos"
+            personaSelect.disabled = false;
+            todoHidden.value = 'false';
+        }
+    });
+
+    // Actualizar el valor también antes de enviar el formulario
+    const form = document.querySelector('form');
+    if (form) {
+        form.addEventListener('submit', function() {
+            todoHidden.value = todoCheckbox.checked ? 'true' : 'false';
+        });
+    }
+
+    personaSelect.addEventListener('change', function() {
+        const selectedOption = this.options[this.selectedIndex];
+        const text = selectedOption ? selectedOption.text : "";
+        const value = selectedOption ? selectedOption.value : "";
+        const noEmp = selectedOption ? selectedOption.dataset.noEmp : "";
+        document.getElementById('PersonaEvaluarText').value = value ? text : "";
+        document.getElementById('NoEmp').value = value ? noEmp : "";
+        
+        // Si se selecciona algo, desmarcar "Todos"
+        if (value) {
+            todoCheckbox.checked = false;
+            todoHidden.value = 'false';
+        }
+    });
+
     // Actualizar dinámicamente el label y cargar personas según la Encuesta seleccionada
     document.getElementById('encuestaId').addEventListener('change', function() {
         const selectedOption = this.options[this.selectedIndex];
@@ -108,9 +264,9 @@
     });
     
     // Función para cargar personas a evaluar vía AJAX
-    function loadPersonasEvaluar(idTipoEvaluacion) {
+    function loadPersonasEvaluar(idTipoEvaluacion, selectedValue = "") {
         const personaSelect = document.getElementById('personaEvaluar');
-        
+
         if (!idTipoEvaluacion || idTipoEvaluacion === '') {
             // Si no hay selección, mostrar opción por defecto
             personaSelect.innerHTML = '<option value="">-- Seleccione --</option>';
@@ -122,12 +278,18 @@
             .then(response => response.json())
             .then(data => {
                 personaSelect.innerHTML = '<option value="">-- Seleccione --</option>';
-                
                 if (data.success && data.personas && data.personas.length > 0) {
                     data.personas.forEach(persona => {
                         const option = document.createElement('option');
                         option.value = persona.value;
                         option.text = persona.text;
+                        option.dataset.noEmp = persona.noEmp || "";
+                        // 👇 mantener selección
+                        if (persona.value === selectedValue) {
+                            option.selected = true;
+                            document.getElementById('PersonaEvaluarText').value = persona.text;
+                            document.getElementById('NoEmp').value = persona.noEmp || "";
+                        }
                         personaSelect.appendChild(option);
                     });
                 } else {
@@ -136,6 +298,8 @@
                     option.text = 'No hay personas disponibles';
                     personaSelect.appendChild(option);
                 }
+                document.getElementById('PersonaEvaluarText').value = ''; // Limpiar el hidden al cargar nuevas opciones
+                document.getElementById('NoEmp').value = ''; // Limpiar el noEmp al cargar nuevas opciones
             })
             .catch(error => {
                 console.error('Error al cargar personas:', error);
@@ -157,4 +321,254 @@
             loadPersonasEvaluar(selectedValue);
         }
     });
+
+    window.addEventListener('load', function () {
+        const encuestaId = document.getElementById('encuestaId').value;
+        const selectedPersona = "@Model.PersonaEvaluar";
+
+        if (encuestaId) {
+            loadPersonasEvaluar(encuestaId, selectedPersona);
+        }
+    });
+
+    // Manejar el cambio de tipo de reporte
+    document.getElementById('tipoReporte').addEventListener('change', function() {
+        const fechaInicioInput = document.querySelector('input[asp-for="FechaInicio"]');
+        const fechaFinalInput = document.querySelector('input[asp-for="FechaFinal"]');
+        
+        // Buscar por name si asp-for no funciona
+        const fechaInicio = fechaInicioInput || document.querySelector('[name="FechaInicio"]');
+        const fechaFinal = fechaFinalInput || document.querySelector('[name="FechaFinal"]');
+        
+        if (this.value === '2') {
+            // Reporte Histórico: deshabilitar campos de fecha
+            if (fechaInicio) fechaInicio.disabled = true;
+            if (fechaFinal) fechaFinal.disabled = true;
+        } else {
+            // Reporte Normal: habilitar campos de fecha
+            if (fechaInicio) fechaInicio.disabled = false;
+            if (fechaFinal) fechaFinal.disabled = false;
+        }
+    });
+
+    // Inicializar estado de los campos de fecha al cargar la página
+    window.addEventListener('load', function() {
+        const tipoReporte = document.getElementById('tipoReporte');
+        const fechaInicio = document.querySelector('[name="FechaInicio"]');
+        const fechaFinal = document.querySelector('[name="FechaFinal"]');
+        
+        if (tipoReporte.value === '2') {
+            if (fechaInicio) fechaInicio.disabled = true;
+            if (fechaFinal) fechaFinal.disabled = true;
+        }
+        
+        // Habilitar botón de descarga si hay datos en los reportes
+        habilitarBotonDescarga();
+    });
+
+    /// <summary>
+    /// Función para habilitar/deshabilitar el botón de descarga según si hay datos en los reportes
+    /// </summary>
+    function habilitarBotonDescarga() {
+        const btnDescargar = document.getElementById('btnDescargarReporte');
+        // Verificar si existe al menos una tabla con datos
+        const tablas = document.querySelectorAll('table');
+        let tieneData = false;
+        
+        if (tablas.length > 0) {
+            for (let tabla of tablas) {
+                const filas = tabla.querySelectorAll('tbody tr');
+                if (filas.length > 0) {
+                    tieneData = true;
+                    break;
+                }
+            }
+        }
+        
+        btnDescargar.disabled = !tieneData;
+    }
+
+    /// <summary>
+    /// Función para convertir una tabla HTML a un array de arrays
+    /// </summary>
+    function tablaToArray(tabla) {
+        const datos = [];
+        const filas = tabla.querySelectorAll('tr');
+        
+        filas.forEach(fila => {
+            const fila_datos = [];
+            const celdas = fila.querySelectorAll('th, td');
+            
+            celdas.forEach(celda => {
+                fila_datos.push(celda.textContent.trim());
+            });
+            
+            if (fila_datos.length > 0) {
+                datos.push(fila_datos);
+            }
+        });
+        
+        return datos;
+    }
+
+    /// <summary>
+    /// Función para convertir un array de arrays a DataTable
+    /// </summary>
+    function arrayToDataTable(arrayData, columnNames) {
+        const dataTable = [];
+        
+        // Crear objetos con propiedades según los headers
+        for (let i = 1; i < arrayData.length; i++) {
+            const row = {};
+            for (let j = 0; j < columnNames.length; j++) {
+                row[columnNames[j]] = arrayData[i][j] || '';
+            }
+            dataTable.push(row);
+        }
+        
+        return dataTable;
+    }
+
+    // Manejar click en el botón de descarga
+    document.getElementById('btnDescargarReporte').addEventListener('click', function() {
+        try {
+            console.log('Iniciando descarga de reporte...');
+            
+            let reporteDePromedios = null;
+            let agentesQueContestaronEncuesta = null;
+
+            // Buscar el h2 de "Resultados del Reporte" y su tabla
+            const h2s = document.querySelectorAll('h2');
+            console.log(`Encontrados ${h2s.length} h2`);
+            
+            h2s.forEach(h2 => {
+                const texto = h2.textContent.trim();
+                console.log(`H2 encontrado: "${texto}"`);
+                
+                // Buscar la tabla en el contenedor padre (div con bg-white)
+                const contenedor = h2.closest('div.bg-white');
+                if (!contenedor) {
+                    console.log(`No se encontró contenedor para: ${texto}`);
+                    return;
+                }
+                
+                const tabla = contenedor.querySelector('table');
+                if (!tabla) {
+                    console.log(`No se encontró tabla para: ${texto}`);
+                    return;
+                }
+                
+                if (texto.includes('Resultados del Reporte')) {
+                    console.log('Procesando tabla de Resultados');
+                    const headers = [];
+                    const values = [];
+                    
+                    tabla.querySelectorAll('thead th').forEach(th => {
+                        headers.push(th.textContent.trim());
+                    });
+                    console.log('Headers:', headers);
+                    
+                    tabla.querySelectorAll('tbody tr').forEach(tr => {
+                        const row = {};
+                        const cells = tr.querySelectorAll('td');
+                        cells.forEach((cell, i) => {
+                            if (i < headers.length) {
+                                row[headers[i]] = cell.textContent.trim();
+                            }
+                        });
+                        values.push(row);
+                    });
+                    console.log('Filas:', values.length);
+                    
+                    reporteDePromedios = {
+                        columns: headers,
+                        rows: values
+                    };
+                } 
+                else if (texto.includes('Agentes que Contestaron')) {
+                    console.log('Procesando tabla de Agentes');
+                    const headers = [];
+                    const values = [];
+                    
+                    tabla.querySelectorAll('thead th').forEach(th => {
+                        headers.push(th.textContent.trim());
+                    });
+                    console.log('Headers:', headers);
+                    
+                    tabla.querySelectorAll('tbody tr').forEach(tr => {
+                        const row = {};
+                        const cells = tr.querySelectorAll('td');
+                        cells.forEach((cell, i) => {
+                            if (i < headers.length) {
+                                row[headers[i]] = cell.textContent.trim();
+                            }
+                        });
+                        values.push(row);
+                    });
+                    console.log('Filas:', values.length);
+                    
+                    agentesQueContestaronEncuesta = {
+                        columns: headers,
+                        rows: values
+                    };
+                }
+            });
+
+            console.log('ReporteDePromedios:', reporteDePromedios ? 'OK' : 'null');
+            console.log('AgentesQueContestaronEncuesta:', agentesQueContestaronEncuesta ? 'OK' : 'null');
+
+            if (!reporteDePromedios && !agentesQueContestaronEncuesta) {
+                console.error('No se encontraron datos para descargar');
+                alert('No hay datos para descargar');
+                return;
+            }
+
+            console.log('Enviando petición al servidor...');
+            const payload = {
+                reporteDePromedios: reporteDePromedios,
+                agentesQueContestaronEncuesta: agentesQueContestaronEncuesta
+            };
+
+            // Enviar petición al servidor
+            fetch('/Reportes/DescargarReporte', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify(payload)
+            })
+            .then(response => {
+                console.log('Response status:', response.status);
+                if (response.ok) {
+                    return response.blob();
+                }
+                return response.text().then(text => {
+                    console.error('Error response text:', text);
+                    throw new Error(`Error HTTP ${response.status}: ${text}`);
+                });
+            })
+            .then(blob => {
+                console.log('Archivo generado, tamaño:', blob.size);
+                // Crear un link de descarga y simular click
+                const url = window.URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = 'Reporte_Evaluaciones.xlsx';
+                document.body.appendChild(a);
+                a.click();
+                window.URL.revokeObjectURL(url);
+                a.remove();
+                console.log('Descarga completada');
+                alert('¡Reporte descargado exitosamente!');
+            })
+            .catch(error => {
+                console.error('Error en fetch:', error);
+                alert('Error al descargar el reporte: ' + error.message);
+            });
+        } catch (error) {
+            console.error('Error inesperado:', error);
+            alert('Error inesperado al procesar la descarga');
+        }
+    });
+
 </script>

@@ -144,3 +144,10 @@ C:\DesarrolloAdministrativo\AplicacionesWeb\EncuestasEvaluacionLiderazgo\bin\Deb
 C:\DesarrolloAdministrativo\AplicacionesWeb\EncuestasEvaluacionLiderazgo\bin\Debug\net9.0\EncuestasEvaluacionLiderazgo.pdb
 C:\DesarrolloAdministrativo\AplicacionesWeb\EncuestasEvaluacionLiderazgo\obj\Debug\net9.0\EncuestasEvaluacionLiderazgo.genruntimeconfig.cache
 C:\DesarrolloAdministrativo\AplicacionesWeb\EncuestasEvaluacionLiderazgo\obj\Debug\net9.0\ref\EncuestasEvaluacionLiderazgo.dll
+C:\DesarrolloAdministrativo\AplicacionesWeb\EncuestasEvaluacionLiderazgo\bin\Debug\net9.0\ClosedXML.dll
+C:\DesarrolloAdministrativo\AplicacionesWeb\EncuestasEvaluacionLiderazgo\bin\Debug\net9.0\DocumentFormat.OpenXml.dll
+C:\DesarrolloAdministrativo\AplicacionesWeb\EncuestasEvaluacionLiderazgo\bin\Debug\net9.0\ExcelNumberFormat.dll
+C:\DesarrolloAdministrativo\AplicacionesWeb\EncuestasEvaluacionLiderazgo\bin\Debug\net9.0\Irony.dll
+C:\DesarrolloAdministrativo\AplicacionesWeb\EncuestasEvaluacionLiderazgo\bin\Debug\net9.0\SixLabors.Fonts.dll
+C:\DesarrolloAdministrativo\AplicacionesWeb\EncuestasEvaluacionLiderazgo\bin\Debug\net9.0\System.IO.Packaging.dll
+C:\DesarrolloAdministrativo\AplicacionesWeb\EncuestasEvaluacionLiderazgo\bin\Debug\net9.0\XLParser.dll

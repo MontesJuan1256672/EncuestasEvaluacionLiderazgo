@@ -3,6 +3,7 @@ using System.Data;
 using System.Collections.Generic;
 using Microsoft.Data.SqlClient;
 using EncuestasEvaluacionLiderazgo.Models;
+using System.Globalization;
 
 namespace EncuestasEvaluacionLiderazgo.Data
 {
@@ -470,6 +471,19 @@ namespace EncuestasEvaluacionLiderazgo.Data
             }
         }
 
+        public static DataTable BuscarEmpleadoPorId(string idPersonal)
+        {
+            try
+            {
+                string query = "SELECT * FROM Tr3ss.Personal WHERE IDPersonal = " + idPersonal;
+                return DL.QueryGenericoDWH(query);
+            }
+            catch (Exception ex)
+            {
+                throw new Exception("Error al buscar empleado: " + ex.Message);
+            }
+        }
+
         /// <summary>
         /// Inserta una relación de tipo de encuesta y personal
         /// Llama a DL.InsertaPorIdPersonal que ejecuta sp_Inserta_PorIdPersonal
@@ -576,6 +590,244 @@ namespace EncuestasEvaluacionLiderazgo.Data
                 throw new Exception("Error al obtener usuarios administradores: " + ex.Message);
             }
         }
+
+        /// <summary>
+        /// Obtiene los comentarios por evaluación
+        /// </summary>
+        public static DataSet TraeComentariosPorEvaluacion(int idTipoEvaluacion, string fechaInicial, string fechaFinal, string nombreEvaluado, int idCentroDWH)
+        {
+            string format = "yyyyMMdd";
+            CultureInfo provider = CultureInfo.InvariantCulture;
+
+            if (DateTime.TryParseExact(fechaInicial, format, provider, DateTimeStyles.None, out DateTime parsedfechaInicial) &&
+                DateTime.TryParseExact(fechaFinal, format, provider, DateTimeStyles.None, out DateTime parsedfechaFinal))
+            {
+                if (parsedfechaInicial > parsedfechaFinal)
+                {
+                    throw new Exception("La fecha inicial no puede ser mayor a la fecha final.");
+                }
+            }
+            else
+            {
+                throw new Exception("Las fechas deben tener el formato 'yyyyMMdd'.");
+            }
+
+            try
+            {
+                return DL.TraeComentariosPorEvaluacion(idTipoEvaluacion, parsedfechaInicial, parsedfechaFinal, nombreEvaluado, idCentroDWH);
+            }
+            catch (Exception ex)
+            {
+                throw new Exception("Error al obtener comentarios por evaluación: " + ex.Message);
+            }
+        }
+
+        /// <summary>
+        /// Obtiene las actividades por encuesta
+        /// </summary>
+        public static DataSet TraeActividadesPorEncuesta(int idTipoEvaluacion)
+        {
+            try
+            {
+                return DL.TraeActividadesPorEncuesta(idTipoEvaluacion);
+            }
+            catch (Exception ex)
+            {
+                throw new Exception("Error al obtener actividades por encuesta: " + ex.Message);
+            }
+        }
+
+        /// <summary>
+        /// Obtiene promedios de reporte DWH llamando a DL.TraeRepPromediosDWH
+        /// </summary>
+        /// <param name="idPersonalJefe">ID del personal jefe</param>
+        /// <param name="idCentroDWH">ID del centro DWH</param>
+        /// <param name="idPersonalEvaluado">ID del personal evaluado</param>
+        /// <param name="idTipoEvaluacion">ID del tipo de evaluación</param>
+        /// <param name="fechaIni">Fecha inicial</param>
+        /// <param name="fechaFin">Fecha final</param>
+        /// <returns>DataSet con los promedios</returns>
+        public static DataSet TraeRepPromediosDWH(string idPersonalJefe, int idCentroDWH, string idPersonalEvaluado, int idTipoEvaluacion, string fechaIni, string fechaFin)
+        {
+            string format = "yyyyMMdd";
+            CultureInfo provider = CultureInfo.InvariantCulture;
+
+            if (DateTime.TryParseExact(fechaIni, format, provider, DateTimeStyles.None, out DateTime parsedfechaIni) &&
+                DateTime.TryParseExact(fechaFin, format, provider, DateTimeStyles.None, out DateTime parsedfechaFin))
+            {
+                if (parsedfechaIni > parsedfechaFin)
+                {
+                    throw new Exception("La fecha inicial no puede ser mayor a la fecha final.");
+                }
+            }
+            else
+            {
+                throw new Exception("Las fechas deben tener el formato 'yyyyMMdd'.");
+            }
+            
+            try
+            {
+                return DL.TraeRepPromediosDWH(idPersonalJefe, idCentroDWH, idPersonalEvaluado, idTipoEvaluacion, parsedfechaIni, parsedfechaFin);
+            }
+            catch (Exception ex)
+            {
+                throw new Exception("Error al obtener promedios de reporte DWH: " + ex.Message);
+            }
+        }
+
+        public static string TraeTotalEncuestas(int idTipoEvaluacion, int idPersonalEvaluado, int idCentroDWH, string fechaIni, string fechaFin)
+        {
+            string format = "yyyyMMdd";
+            CultureInfo provider = CultureInfo.InvariantCulture;
+
+            int idtipoEval = Convert.ToInt32(idTipoEvaluacion);
+            int idPersonalDWH = Convert.ToInt32(idPersonalEvaluado);
+            int idCentro = Convert.ToInt32(idCentroDWH);
+
+            if (DateTime.TryParseExact(fechaIni, format, provider, DateTimeStyles.None, out DateTime parsedfechaIni) &&
+                DateTime.TryParseExact(fechaFin, format, provider, DateTimeStyles.None, out DateTime parsedfechaFin))
+            {
+                if (parsedfechaIni > parsedfechaFin)
+                {
+                    throw new Exception("La fecha inicial no puede ser mayor a la fecha final.");
+                }
+            }
+            else
+            {
+                throw new Exception("Las fechas deben tener el formato 'yyyyMMdd'.");
+            }
+
+            try
+            {
+                return DL.TraeTotalEncuestas(idtipoEval, idPersonalDWH, idCentro, parsedfechaIni, parsedfechaFin);
+            }
+            catch (Exception ex)
+            {
+                throw new Exception("Error al obtener total de encuestas: " + ex.Message);
+            }
+        }
+
+        public static DataTable TraeRepPromediosPreguntaDWH(string IDPersonalDWH_Jefe, string IDPersonalDWH_Evaluado, string IdTipoEvaluacion, string IdCentroDWH, string FechaIni, string FechaFin, int AgentesEncuestados)
+        {
+            string format = "yyyyMMdd";
+            CultureInfo provider = CultureInfo.InvariantCulture;
+
+            if (DateTime.TryParseExact(FechaIni, format, provider, DateTimeStyles.None, out DateTime parsedFechaIni) &&
+                DateTime.TryParseExact(FechaFin, format, provider, DateTimeStyles.None, out DateTime parsedFechaFin))
+            {
+                if (parsedFechaIni > parsedFechaFin)
+                {
+                    throw new Exception("La fecha inicial no puede ser mayor a la fecha final.");
+                }
+            }
+            else
+            {
+                throw new Exception("Las fechas deben tener el formato 'yyyyMMdd'.");
+            }
+
+            try
+            {
+                return DL.TraeRepPromediosPreguntaDWH(IDPersonalDWH_Jefe, IDPersonalDWH_Evaluado, IdTipoEvaluacion, IdCentroDWH, parsedFechaIni, parsedFechaFin, AgentesEncuestados);
+            }
+            catch (Exception ex)
+            {
+                throw new Exception("Error al obtener promedios por pregunta de reporte DWH: " + ex.Message);
+            }
+        }
+
+        public static DataTable AgentesQueContestaronEncuesta(int idPersonalAEvaluar, string fechaIni, string fechaFin)
+        {
+            string query = $@"
+                SELECT cNombreEvaluado Evaluado, cFecha Fecha_Eval, cComentarios Comentarios
+                FROM [dbo].[eval_Evaluaciones] 
+                WHERE IDPersonalDWH_Evaluado = {idPersonalAEvaluar}
+                AND cFecha BETWEEN '{fechaIni}' AND '{fechaFin}'
+                ORDER BY cFecha DESC;
+            ";
+
+            var ds = DL.queryGenericoEvaluacionLiderazgo(query);
+
+            if (ds.Tables.Count > 0 && ds.Tables[0].Rows.Count > 0)
+            {
+                return ds.Tables[0];
+            }
+
+            return null;
+        }
+
+        public static DataSet PromedioPorEvaluado(int idPersonalAEvaluar, int idTipoEvaluacion, string fechaIni, string fechaFin)
+        {
+            string query = $@"
+                SELECT 
+                    COM.Descripcion AS Competencia, 
+                    CAST(AVG(CAST(Res.nRespuesta AS DECIMAL(10,2))) AS DECIMAL(10,2)) AS PromedioRespuesta
+                FROM [dbo].[eval_Respuestas] Res
+                INNER JOIN [dbo].[eval_Evaluaciones] Eva ON Res.IDEvaluacion = Eva.IDEvaluacion
+                INNER JOIN [dbo].[eval_Preguntas] PREG ON Res.IDPregunta = PREG.IDPregunta
+                INNER JOIN [dbo].[cat_Catalogos] COM ON PREG.IDCompetencia = COM.IDCatalogo  
+                WHERE Eva.IDPersonalDWH_Evaluado = {idPersonalAEvaluar}
+                AND Res.IDPregunta IN (
+                    SELECT PREG.IDPregunta  
+                    FROM EvaluaLiderazgo.[dbo].[eval_Preguntas] AS PREG  
+                    WHERE ((PREG.bActivo = 1 AND PREG.IdTipoEvaluacion NOT IN(2,6)) 
+                        OR (PREG.IDPregunta >= 80 AND PREG.IdTipoEvaluacion IN(2,6))) 
+                    AND PREG.IdTipoEvaluacion = {idTipoEvaluacion}
+                )
+                AND Eva.cFecha BETWEEN '{fechaIni}' AND '{fechaFin}'
+                GROUP BY COM.Descripcion
+
+                UNION ALL
+
+                SELECT 
+                    'Total de evaluaciones' AS Competencia, 
+                    CAST(COUNT(*) AS DECIMAL(10,2)) AS PromedioRespuesta
+                FROM [dbo].[eval_Evaluaciones]
+                WHERE IDTipoEvaluacion = {idTipoEvaluacion}  
+                AND IDPersonalDWH_Evaluado = {idPersonalAEvaluar}
+                AND cFecha BETWEEN '{fechaIni}' AND '{fechaFin}'
+                ";
+            
+            
+            var ds = DL.queryGenericoEvaluacionLiderazgo(query);
+
+            if (ds.Tables.Count > 0 && ds.Tables[0].Rows.Count > 0)
+            {
+                return ds;
+            }
+
+            return null;
+        }
+
+        public static DataSet GetAntiguedadConJefePorEvaluacion(int idPersonalAEvaluar)
+        {
+            string query = $"SELECT  Ant.Descripcion, COUNT(*) AS Cantidad " +
+                        $"FROM [dbo].[eval_Evaluaciones] Eva " +
+                        $"INNER JOIN [dbo].[cat_Catalogos] Ant ON Ant.IDCatalogo = Eva.IDAntiguedadConJefe " +
+                        $"WHERE IDPersonalDWH_Evaluado = {idPersonalAEvaluar} " +
+                        $"GROUP BY Ant.Descripcion " +
+                        $"ORDER BY COUNT(*) DESC;";
+
+            return DL.queryGenericoEvaluacionLiderazgo(query);
+        }
+
+        public static string GetFechaUltimaEvaluacion(int idPersonalAEvaluar)
+        {
+            string query = $"SELECT top 1  cFecha " +
+                           $"FROM [dbo].[eval_Evaluaciones] " +
+                           $"WHERE IDPersonalDWH_Evaluado = {idPersonalAEvaluar} " +
+                           $"ORDER BY cFecha DESC;";
+
+            var ds = DL.queryGenericoEvaluacionLiderazgo(query);
+
+            if (ds.Tables.Count > 0 && ds.Tables[0].Rows.Count > 0)
+            {
+                return ds.Tables[0].Rows[0]["cFecha"].ToString();
+            }
+
+            return null;
+        }
+    
+
 
     }
 }

@@ -1,4 +1,5 @@
 using Microsoft.AspNetCore.Mvc.Rendering;
+using System.Data;
 
 namespace EncuestasEvaluacionLiderazgo.Models
 {
@@ -24,6 +25,11 @@ namespace EncuestasEvaluacionLiderazgo.Models
         public string TipoReporte { get; set; } = "";
 
         /// <summary>
+        /// Ciudad/Centro seleccionado
+        /// </summary>
+        public string Ciudad { get; set; } = "";
+
+        /// <summary>
         /// Fecha de inicio del período de búsqueda
         /// </summary>
         public DateTime? FechaInicio { get; set; }
@@ -37,6 +43,31 @@ namespace EncuestasEvaluacionLiderazgo.Models
         /// ID de la persona a evaluar seleccionada
         /// </summary>
         public string PersonaEvaluar { get; set; } = "";
+        
+        /// <summary>
+        /// Texto de la persona a evaluar seleccionada
+        /// </summary>
+        public string PersonaEvaluarText { get; set; } = "";
+
+        /// <summary>
+        /// Número de empleado de la persona a evaluar
+        /// </summary>
+        public string NoEmp { get; set; } = "";
+
+        /// <summary>
+        /// Indica si se deben procesar todas las personas (checkbox Todos)
+        /// </summary>
+        public string TodoPersonas { get; set; } = "false";
+
+        /// <summary>
+        /// DataTable con los resultados del reporte de promedios
+        /// </summary>
+        public DataTable ReporteDePromedios { get; set; }
+
+        /// <summary>
+        /// DataTable con los agentes que contestaron la encuesta
+        /// </summary>
+        public DataTable AgentesQueContestaronEncuesta { get; set; }
     }
 }
 
