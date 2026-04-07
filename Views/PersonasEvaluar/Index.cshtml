@@ -117,10 +117,13 @@
     document.addEventListener('DOMContentLoaded', function() {
         const filtroSelect = document.getElementById('filtroTipoEvaluacion');
         
-        if (!filtroSelect) return;
+        if (!filtroSelect) {
+            return;
+        }
 
         // Establecer el valor seleccionado actual
         const valorActual = '@ViewBag.FiltroTipoEvaluacionActual';
+        
         if (valorActual) {
             filtroSelect.value = valorActual;
         }
@@ -129,8 +132,27 @@
         filtroSelect.addEventListener('change', function () {
             const idTipoEvaluacion = this.value;
             
+            // Obtener la ruta base desde la URL actual analizando el pathname
+            // URL actual: /Des/EncuestasEvaluacionLiderazgo/PersonasEvaluar
+            // Necesitamos extraer: /Des/EncuestasEvaluacionLiderazgo
+            const pathname = window.location.pathname;
+            
+            // Encontrar dónde termina "/PersonasEvaluar" y extraer el prefijo
+            const controllerName = 'PersonasEvaluar';
+            const indexOfController = pathname.lastIndexOf('/' + controllerName);
+            
+            let pathBase = '';
+            if (indexOfController !== -1) {
+                pathBase = pathname.substring(0, indexOfController);
+            } else {
+                pathBase = pathname.split('/').slice(0, -1).join('/');
+            }
+            
+            // Construir URL con el PathBase correcto
+            const urlDestino = pathBase + '/PersonasEvaluar?idTipoEvaluacion=' + encodeURIComponent(idTipoEvaluacion);
+            
             // Redirigir a la URL con el parámetro del filtro
-            window.location.href = '/PersonasEvaluar?idTipoEvaluacion=' + encodeURIComponent(idTipoEvaluacion);
+            window.location.href = urlDestino;
         });
     });
 </script>
