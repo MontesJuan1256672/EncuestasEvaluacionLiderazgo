@@ -206,20 +206,43 @@ namespace EncuestasEvaluacionLiderazgo.Controllers
         /// Obtiene las personas a evaluar dinámicamente para un tipo de evaluación específico
         /// Llamado vía AJAX desde la vista
         /// </summary>
-        [HttpGet]
-        [Route("GetPersonasEvaluar")]
+        [HttpGet("GetPersonasEvaluar")]
         public IActionResult GetPersonasEvaluar(string idTipoEvaluacion)
         {
             try
             {
+                // Log de entrada
+                Console.WriteLine($"[GetPersonasEvaluar] Iniciando - idTipoEvaluacion: '{idTipoEvaluacion}' (tipo: {idTipoEvaluacion?.GetType().Name})");
+
+                // Validar entrada
                 if (string.IsNullOrEmpty(idTipoEvaluacion))
                 {
-                    return Json(new { success = false, message = "ID de tipo de evaluación no proporcionado" });
+                    Console.WriteLine("[GetPersonasEvaluar] ⚠️ idTipoEvaluacion está vacío");
+                    return Json(new { success = true, personas = new List<object>() });
                 }
 
+                // Validar que sea un número válido mayor a 0
+                if (!int.TryParse(idTipoEvaluacion, out int idTipoEvaluacionInt) || idTipoEvaluacionInt <= 0)
+                {
+                    Console.WriteLine($"[GetPersonasEvaluar] ⚠️ idTipoEvaluacion no es válido o es <= 0: {idTipoEvaluacion}");
+                    return Json(new { success = true, personas = new List<object>() });
+                }
+
+                Console.WriteLine($"[GetPersonasEvaluar] ID validado: {idTipoEvaluacionInt}");
+
+                // Solo llamar a la BD si tenemos un ID válido
+                var dataSet = FL.TraePersonasEvaluar(idTipoEvaluacionInt);
                 
-                var dataSet = FL.TraePersonasEvaluar(Convert.ToInt32(idTipoEvaluacion));
-                
+                Console.WriteLine($"[GetPersonasEvaluar] DataSet obtenido - null: {dataSet == null}");
+                if (dataSet != null)
+                {
+                    Console.WriteLine($"[GetPersonasEvaluar] Tablas en DataSet: {dataSet.Tables.Count}");
+                    if (dataSet.Tables.Count > 0)
+                    {
+                        Console.WriteLine($"[GetPersonasEvaluar] Filas en primera tabla: {dataSet.Tables[0].Rows.Count}");
+                    }
+                }
+
                 List<object> personas = new List<object>();
 
                 if (dataSet != null && dataSet.Tables.Count > 0 && dataSet.Tables[0].Rows.Count > 0)
@@ -235,20 +258,21 @@ namespace EncuestasEvaluacionLiderazgo.Controllers
                         if (!string.IsNullOrEmpty(idPersona) && !string.IsNullOrEmpty(nombrePersona))
                         {
                             personas.Add(new { value = idPersona, text = nombrePersona, noEmp = noEmp });
+                            Console.WriteLine($"[GetPersonasEvaluar] Persona agregada: {nombrePersona} (ID: {idPersona})");
                         }
                     }
                 }
 
-                if (personas.Count == 0)
-                {
-                    personas.Add(new { value = "", text = "Sin personas disponibles" });
-                }
-
+                Console.WriteLine($"[GetPersonasEvaluar] ✅ Retornando {personas.Count} personas");
+                // Retornar lista (vacía si no hay datos, con datos si hay)
                 return Json(new { success = true, personas = personas });
             }
             catch (Exception ex)
             {
-                return Json(new { success = false, message = $"Error: {ex.Message}" });
+                // Log del error para debugging pero retornar lista vacía en el frontend
+                Console.WriteLine($"[GetPersonasEvaluar] ❌ Excepción: {ex.GetType().Name}: {ex.Message}");
+                Console.WriteLine($"[GetPersonasEvaluar] Stack: {ex.StackTrace}");
+                return Json(new { success = true, personas = new List<object>() });
             }
         }
 

@@ -201,6 +201,10 @@
 </div>
 
 <script>
+    // Variable global para la URL base de la API - Usa Razor para generar la URL correcta
+    const apiBaseUrl = '@Url.Action("GetPersonasEvaluar", "Reportes")';
+    console.log('API Base URL generada por Razor:', apiBaseUrl);
+
     // Manejar checkbox "Todos"
     const todoCheckbox = document.getElementById('todoPersonas');
     const personaSelect = document.getElementById('personaEvaluar');
@@ -273,12 +277,36 @@
             return;
         }
 
-        // Hacer petición AJAX
-        fetch(`/Reportes/GetPersonasEvaluar?idTipoEvaluacion=${encodeURIComponent(idTipoEvaluacion)}`)
-            .then(response => response.json())
+        // Hacer petición AJAX con URL dinámica generada por Razor
+        fetch(`${apiBaseUrl}?idTipoEvaluacion=${encodeURIComponent(idTipoEvaluacion)}`)
+            .then(response => {
+                // Validar que la respuesta sea ok
+                if (!response.ok) {
+                    console.error(`HTTP Error: ${response.status}`);
+                    throw new Error(`HTTP Error: ${response.status}`);
+                }
+                return response.json();
+            })
             .then(data => {
+                console.log('Respuesta del servidor:', data);
                 personaSelect.innerHTML = '<option value="">-- Seleccione --</option>';
-                if (data.success && data.personas && data.personas.length > 0) {
+                
+                // Validar que data sea un objeto válido
+                if (!data || typeof data !== 'object') {
+                    console.error('Respuesta inválida:', data);
+                    personaSelect.innerHTML = '<option value="">-- Seleccione --</option>';
+                    return;
+                }
+
+                // Si success es false, mostrar sin personas
+                if (data.success === false) {
+                    console.warn('Servidor reportó success=false');
+                    personaSelect.innerHTML = '<option value="">-- Seleccione --</option>';
+                    return;
+                }
+
+                // Verificar si hay personas disponibles
+                if (data.personas && Array.isArray(data.personas) && data.personas.length > 0) {
                     data.personas.forEach(persona => {
                         const option = document.createElement('option');
                         option.value = persona.value;
@@ -292,18 +320,18 @@
                         }
                         personaSelect.appendChild(option);
                     });
+                    console.log(`Se cargaron ${data.personas.length} personas`);
                 } else {
-                    const option = document.createElement('option');
-                    option.value = '';
-                    option.text = 'No hay personas disponibles';
-                    personaSelect.appendChild(option);
+                    // No hay personas disponibles, dejar vacío el combobox
+                    console.log('Sin personas disponibles para este tipo de evaluación');
                 }
+                
                 document.getElementById('PersonaEvaluarText').value = ''; // Limpiar el hidden al cargar nuevas opciones
                 document.getElementById('NoEmp').value = ''; // Limpiar el noEmp al cargar nuevas opciones
             })
             .catch(error => {
-                console.error('Error al cargar personas:', error);
-                personaSelect.innerHTML = '<option value="">Error al cargar datos</option>';
+                console.error('Error completo al cargar personas:', error);
+                personaSelect.innerHTML = '<option value="">-- Seleccione --</option>';
             });
     }
     
@@ -529,8 +557,9 @@
                 agentesQueContestaronEncuesta: agentesQueContestaronEncuesta
             };
 
-            // Enviar petición al servidor
-            fetch('/Reportes/DescargarReporte', {
+            // Enviar petición al servidor con URL dinámica generada por Razor
+            const descargarUrl = '@Url.Action("DescargarReporte", "Reportes")';
+            fetch(descargarUrl, {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json'

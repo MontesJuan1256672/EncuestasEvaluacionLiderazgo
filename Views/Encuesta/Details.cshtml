@@ -214,6 +214,10 @@
 @section Scripts {
     <script>
         let idiomaActual = 'es'; // Idioma por defecto
+        
+        // Variable global para la URL base de la API - Usa Razor para generar la URL correcta
+        const apiBaseUrl = '@Url.Action("GetPersonasEvaluar", "Reportes")';
+        console.log('API Base URL generada por Razor:', apiBaseUrl);
 
         // Cargar personas a evaluar cuando se carga la página
         document.addEventListener('DOMContentLoaded', function () {
@@ -225,16 +229,56 @@
             const comboPersonas = document.getElementById('personaEvaluar');
             const idTipoEvaluacion = comboPersonas.getAttribute('data-id-tipo-evaluacion');
 
-            if (!idTipoEvaluacion) {
+            console.log('=== DEBUGGING: cargarPersonasEvaluar ===');
+            console.log('1. idTipoEvaluacion del atributo data:', idTipoEvaluacion);
+            console.log('2. Tipo:', typeof idTipoEvaluacion);
+            console.log('3. Vacío:', !idTipoEvaluacion || idTipoEvaluacion === '' || idTipoEvaluacion === '0');
+
+            if (!idTipoEvaluacion || idTipoEvaluacion === '' || idTipoEvaluacion === '0') {
+                console.warn('⚠️ No hay ID de tipo de evaluación válido. Deteniendo carga.');
                 comboPersonas.innerHTML = '<option value="">-- Sin tipo de evaluación --</option>';
                 return;
             }
 
+            const url = `${apiBaseUrl}?idTipoEvaluacion=${encodeURIComponent(idTipoEvaluacion)}`;
+            console.log('4. URL que se llamará:', url);
+
             // Llamar al endpoint GetPersonasEvaluar del controlador Reportes
-            fetch(`/Reportes/GetPersonasEvaluar?idTipoEvaluacion=${encodeURIComponent(idTipoEvaluacion)}`)
-                .then(response => response.json())
+            fetch(url)
+                .then(response => {
+                    console.log('5. Response status:', response.status);
+                    console.log('6. Response ok:', response.ok);
+                    
+                    // Validar que la respuesta sea ok
+                    if (!response.ok) {
+                        console.error(`❌ HTTP Error: ${response.status}`);
+                        throw new Error(`HTTP Error: ${response.status}`);
+                    }
+                    return response.json();
+                })
                 .then(data => {
-                    if (data.success && data.personas && data.personas.length > 0) {
+                    console.log('7. Data recibida:', JSON.stringify(data));
+                    
+                    // Validar que data sea un objeto válido
+                    if (!data || typeof data !== 'object') {
+                        console.error('❌ Respuesta inválida (no es objeto):', data);
+                        comboPersonas.innerHTML = '<option value="">-- Sin personas disponibles --</option>';
+                        return;
+                    }
+
+                    console.log('8. data.success:', data.success);
+                    console.log('9. data.personas:', data.personas);
+                    console.log('10. personas.length:', data.personas ? data.personas.length : 0);
+
+                    // Si success es false, mostrar sin personas
+                    if (data.success === false) {
+                        console.warn('⚠️ Servidor reportó success=false. Mensaje:', data.message);
+                        comboPersonas.innerHTML = '<option value="">-- sin personas disponibles --</option>';
+                        return;
+                    }
+
+                    // Verificar si hay personas disponibles
+                    if (data.personas && Array.isArray(data.personas) && data.personas.length > 0) {
                         // Limpiar opciones anteriores
                         comboPersonas.innerHTML = '<option value="">-- Seleccione --</option>';
 
@@ -245,12 +289,20 @@
                             option.textContent = persona.text;
                             comboPersonas.appendChild(option);
                         });
+                        console.log(`✅ Se cargaron ${data.personas.length} personas correctamente`);
                     } else {
+                        // No hay personas disponibles
+                        console.warn('⚠️ No hay personas disponibles para este tipo de evaluación');
+                        console.log('   - data.personas existe:', !!data.personas);
+                        console.log('   - Es array:', Array.isArray(data.personas));
+                        console.log('   - Length:', data.personas ? data.personas.length : 'N/A');
                         comboPersonas.innerHTML = '<option value="">-- Sin personas disponibles --</option>';
                     }
                 })
                 .catch(error => {
-                    console.error('Error al cargar personas:', error);
+                    console.error('❌ Error completo al cargar personas:', error);
+                    console.error('Mensaje del error:', error.message);
+                    console.error('Stack:', error.stack);
                     comboPersonas.innerHTML = '<option value="">-- Error al cargar --</option>';
                 });
         }

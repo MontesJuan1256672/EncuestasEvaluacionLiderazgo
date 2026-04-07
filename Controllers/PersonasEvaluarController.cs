@@ -57,29 +57,41 @@ namespace EncuestasEvaluacionLiderazgo.Controllers
 
             // Obtener lista de personas a evaluar desde la base de datos
             // Usar el parámetro idTipoEvaluacion del combobox para filtrar
-            // Si es nulo o 0, usar 100 como valor por defecto
+            // Si es nulo o 0, usar una lista vacía
             int idTipoEvaluacionInt = 0;
             if (!string.IsNullOrWhiteSpace(idTipoEvaluacion) && int.TryParse(idTipoEvaluacion, out int parsedId) && parsedId > 0)
             {
                 idTipoEvaluacionInt = parsedId;
             }
             
-            var ds = FL.TraePersonasEvaluar(idTipoEvaluacionInt);
             var personas = new List<PersonaEvaluar>();
 
-            if (ds != null && ds.Tables.Count > 0 && ds.Tables[0].Rows.Count > 0)
+            // Solo hacer la llamada a la BD si hay un tipo de evaluación válido
+            if (idTipoEvaluacionInt > 0)
             {
-                foreach (System.Data.DataRow row in ds.Tables[0].Rows)
+                try
                 {
-                    personas.Add(new PersonaEvaluar
+                    var ds = FL.TraePersonasEvaluar(idTipoEvaluacionInt);
+
+                    if (ds != null && ds.Tables.Count > 0 && ds.Tables[0].Rows.Count > 0)
                     {
-                        IDPersona = row["IDPersonal"] != System.DBNull.Value ? Convert.ToInt32(row["IDPersonal"]) : 0,
-                        NumeroEmpleado = row["NoEmp"] != System.DBNull.Value ? row["NoEmp"].ToString() : "",
-                        Nombre = row["Nombre"] != System.DBNull.Value ? row["Nombre"].ToString() : "",
-                        Ciudad = row["Ciudad"] != System.DBNull.Value ? row["Ciudad"].ToString() : "",
-                        Puesto = row["cDescripcion"] != System.DBNull.Value ? row["cDescripcion"].ToString() : "",
-                        Activo = true  // La columna Activo no viene en el resultado del SP, siempre es true
-                    });
+                        foreach (System.Data.DataRow row in ds.Tables[0].Rows)
+                        {
+                            personas.Add(new PersonaEvaluar
+                            {
+                                IDPersona = row["IDPersonal"] != System.DBNull.Value ? Convert.ToInt32(row["IDPersonal"]) : 0,
+                                NumeroEmpleado = row["NoEmp"] != System.DBNull.Value ? row["NoEmp"].ToString() : "",
+                                Nombre = row["Nombre"] != System.DBNull.Value ? row["Nombre"].ToString() : "",
+                                Ciudad = row["Ciudad"] != System.DBNull.Value ? row["Ciudad"].ToString() : "",
+                                Puesto = row["cDescripcion"] != System.DBNull.Value ? row["cDescripcion"].ToString() : "",
+                                Activo = true  // La columna Activo no viene en el resultado del SP, siempre es true
+                            });
+                        }
+                    }
+                }
+                catch (Exception ex)
+                {
+                    TempData["Error"] = $"Error al cargar personas: {ex.Message}";
                 }
             }
             
