@@ -3,7 +3,6 @@ using System.Data;
 using System.Collections.Generic;
 using Microsoft.Data.SqlClient;
 using ConnStringsTelvista;
-using Librerias;
 using EncuestasEvaluacionLiderazgo.Models;
 
 namespace EncuestasEvaluacionLiderazgo.Data
@@ -15,8 +14,19 @@ namespace EncuestasEvaluacionLiderazgo.Data
     /// </summary>
     public class DL
     {
-        private static string ConStr = GetConEvaluaLiderazgo();
-        private static string ConDWH = GetConDWH();
+        // Usar Lazy<T> para inicialización perezosa (solo se carga cuando se necesita)
+        private static readonly Lazy<string> _conStr = new Lazy<string>(() => GetConEvaluaLiderazgo());
+        private static readonly Lazy<string> _conDWH = new Lazy<string>(() => GetConDWH());
+
+        /// <summary>
+        /// Propiedad para acceder a la cadena de conexión de Evaluación Liderazgo
+        /// </summary>
+        public static string ConStr => _conStr.Value;
+
+        /// <summary>
+        /// Propiedad para acceder a la cadena de conexión del Data Warehouse
+        /// </summary>
+        public static string ConDWH => _conDWH.Value;
 
         /// <summary>
         /// Obtiene la cadena de conexión para el Data Warehouse (DWH)
@@ -25,17 +35,38 @@ namespace EncuestasEvaluacionLiderazgo.Data
         public static string GetConDWH()
         {
             string Coneccion = "";
-            ConnectionWebApi cs_telvista = new ConnectionWebApi();
-            Coneccion = cs_telvista.getConnectionString("2f78398c-55ec-4ba3-aa22-9cdd889240bf", Centros.HIP, true, false);
+            try
+            {
+                ConnectionWebApi cs_telvista = new ConnectionWebApi();
+                Coneccion = cs_telvista.getConnectionString("2f78398c-55ec-4ba3-aa22-9cdd889240bf", Centros.HIP, true, false);
+            }
+            catch (Exception ex)
+            {
+                // Registrar la excepción sin lanzarla para evitar crash de inicialización
+                System.Diagnostics.Debug.WriteLine($"Error al obtener conexión DWH: {ex.Message}");
+                Coneccion = "";
+            }
             return Coneccion;
         }
 
-        
+        /// <summary>
+        /// Obtiene la cadena de conexión para Evaluación Liderazgo
+        /// </summary>
+        /// <returns>Cadena de conexión a Evaluación Liderazgo</returns>
         public static string GetConEvaluaLiderazgo()
         {
             string Coneccion = "";
-            ConnectionWebApi cs_telvista = new ConnectionWebApi();
-            Coneccion = cs_telvista.getConnectionString("e03c659c-a2bc-409c-b1be-51d34218933c", Centros.HIP, true, false);
+            try
+            {
+                ConnectionWebApi cs_telvista = new ConnectionWebApi();
+                Coneccion = cs_telvista.getConnectionString("e03c659c-a2bc-409c-b1be-51d34218933c", Centros.HIP, true, false);
+            }
+            catch (Exception ex)
+            {
+                // Registrar la excepción sin lanzarla para evitar crash de inicialización
+                System.Diagnostics.Debug.WriteLine($"Error al obtener conexión Evaluación Liderazgo: {ex.Message}");
+                Coneccion = "";
+            }
             return Coneccion;
         }
 

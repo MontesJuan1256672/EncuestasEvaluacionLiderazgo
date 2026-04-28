@@ -2,6 +2,7 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Rendering;
 using Microsoft.AspNetCore.Http;
 using System.Threading.Tasks;
+using System.ComponentModel.DataAnnotations;
 using EncuestasEvaluacionLiderazgo.Services;
 using EncuestasEvaluacionLiderazgo.Models;
 using EncuestasEvaluacionLiderazgo.Utilities;
@@ -44,11 +45,15 @@ namespace EncuestasEvaluacionLiderazgo.Controllers
             //IdCentro=JBDCu2wqR68%3d
             //noEmp=RYoAmK/HOdU=                        // 14532 = myN8m0ACXhvMihPlWAkr9w==    
 
-            //?Id=WeRac2RviU0%3d&loc=JBDCu2wqR68%3d&mat=RYoAmK/HOdU=
-            // Leer parámetros encriptados del QueryString
-            string idPersonal = Request.Query["Id"].ToString();
-            string idCentro = Request.Query["loc"].ToString();
-            string noEmp = Request.Query["mat"].ToString();
+            // ?Id=WeRac2RviU0%3d&loc=JBDCu2wqR68%3d&mat=RYoAmK/HOdU=
+            // IMPORTANTE: URL correcta tiene UNA sola "?" al inicio
+            // INCORRECTO: https://localhost:44358/Auth/Login??Id=...
+            // CORRECTO:   https://localhost:44358/Auth/Login?Id=...
+            
+            // Leer parámetros encriptados del QueryString (robusto)
+            string idPersonal = !string.IsNullOrEmpty(Request.Query["Id"]) ? Request.Query["Id"].ToString() : string.Empty;
+            string idCentro = !string.IsNullOrEmpty(Request.Query["loc"]) ? Request.Query["loc"].ToString() : string.Empty;
+            string noEmp = !string.IsNullOrEmpty(Request.Query["mat"]) ? Request.Query["mat"].ToString() : string.Empty;
 
             // Desencriptar parámetros si vienen en el QueryString
             if (!string.IsNullOrEmpty(idPersonal) && !string.IsNullOrEmpty(idCentro) && !string.IsNullOrEmpty(noEmp))
@@ -88,11 +93,23 @@ namespace EncuestasEvaluacionLiderazgo.Controllers
             try
             {
                 var tiposEvaluacion = FL.TraeTiposEvaluacion();
-                ViewBag.TiposEvaluacion = tiposEvaluacion?.Tables.Count > 0 ? tiposEvaluacion.Tables[0] : null;
+                
+                // Validar que los datos existan y estén disponibles
+                if (tiposEvaluacion?.Tables.Count > 0 && tiposEvaluacion.Tables[0].Rows.Count > 0)
+                {
+                    ViewBag.TiposEvaluacion = tiposEvaluacion.Tables[0];
+                }
+                else
+                {
+                    ViewBag.TiposEvaluacion = null;
+                    ViewBag.WarningMessage = "No hay tipos de evaluación disponibles. Intente más tarde.";
+                }
             }
-            catch
+            catch (Exception ex)
             {
+                System.Diagnostics.Debug.WriteLine($"Error en CargarCombosLogin: {ex.Message}");
                 ViewBag.TiposEvaluacion = null;
+                ViewBag.ErrorMessage = "Error al cargar tipos de evaluación";
             }
 
             CargarCiudades();
@@ -194,38 +211,70 @@ namespace EncuestasEvaluacionLiderazgo.Controllers
                 else if (tipoAcceso == 2)
                 {
                     // Acceso Administrador: validar que el IdPersonal esté en la lista de autorizados
-                    var dsAdmins = FL.TraeUsuariosAdministradores();
-                    var administradoresAutorizados = new List<string>();
-                    if (dsAdmins?.Tables.Count > 0)
+                    try
                     {
-                        foreach (System.Data.DataRow row in dsAdmins.Tables[0].Rows)
+                        var dsAdmins = FL.TraeUsuariosAdministradores();
+                        var administradoresAutorizados = new List<string>();
+
+                       
+                        
+                        if (dsAdmins?.Tables.Count > 0 && dsAdmins.Tables[0].Rows.Count > 0)
                         {
-                            administradoresAutorizados.Add(row["IdPErsonalDWH"].ToString().Trim());
+                            foreach (System.Data.DataRow row in dsAdmins.Tables[0].Rows)
+                            {
+                                administradoresAutorizados.Add(row["IdPErsonalDWH"].ToString().Trim());
+                            }
+                        }
+
+                        if (string.IsNullOrEmpty(idPersonal) || !administradoresAutorizados.Contains(idPersonal))
+                        {
+                            ModelState.AddModelError(string.Empty, "Acceso denegado. No tiene permisos de administrador.");
+                            CargarCombosLogin();
+                            return View(model);
+                        }
+
+                        HttpContext.Session.SetString("IdPersonalDWH", idPersonal);
+                        HttpContext.Session.SetInt32("UserId", 1);
+                        HttpContext.Session.SetString("UserName", "Administrador");
+                        HttpContext.Session.SetInt32("UserType", (int)TipoUsuario.Administrador);
+
+                        return RedirectToAction("Index", "Home");
+                    }
+                    catch (Exception ex)
+                    {
+                        System.Diagnostics.Debug.WriteLine($"Error en acceso administrador: {ex.Message}");
+                        ModelState.AddModelError(string.Empty, "Error al validar permisos de administrador. Intente más tarde.");
+                        CargarCombosLogin();
+                        return View(model);
+                    }
+                }
+                else if (tipoAcceso == 3)
+                {
+                    var dtConsulta = FL.TraeUsuariosConsultores();
+                    var consultoresAutorizados = new List<string>();
+
+                    if (dtConsulta != null && dtConsulta.Rows.Count > 0)
+                    {
+                        foreach (System.Data.DataRow row in dtConsulta.Rows)
+                        {
+                            consultoresAutorizados.Add(row["IdPErsonalDWH"].ToString().Trim());
                         }
                     }
 
-                    if (string.IsNullOrEmpty(idPersonal) || !administradoresAutorizados.Contains(idPersonal))
+                    if (string.IsNullOrEmpty(idPersonal) || !consultoresAutorizados.Contains(idPersonal))
                     {
-                        ModelState.AddModelError(string.Empty, "Acceso denegado. No tiene permisos de administrador.");
+                        ModelState.AddModelError(string.Empty, "Acceso denegado. No tiene permisos de consultor.");
                         CargarCombosLogin();
                         return View(model);
                     }
 
-                    HttpContext.Session.SetString("IdPersonalDWH", idPersonal);
-                    HttpContext.Session.SetInt32("UserId", 1);
-                    HttpContext.Session.SetString("UserName", "Administrador");
-                    HttpContext.Session.SetInt32("UserType", (int)TipoUsuario.Administrador);
-
-                    return RedirectToAction("Index", "Home");
-                }
-                else if (tipoAcceso == 3)
-                {
                     // Acceso Consulta
+                    HttpContext.Session.SetString("IdPersonalDWH", idPersonal);
                     HttpContext.Session.SetInt32("UserId", 1);
                     HttpContext.Session.SetString("UserName", "Consulta");
                     HttpContext.Session.SetInt32("UserType", (int)TipoUsuario.Consulta);
 
-                    return RedirectToAction("Index", "Reportes");
+                    return RedirectToAction("Index", "Home");
                 }
 
                 ModelState.AddModelError(string.Empty, "Tipo de acceso no válido");
@@ -297,9 +346,16 @@ namespace EncuestasEvaluacionLiderazgo.Controllers
     /// </summary>
     public class LoginViewModel
     {
+        [Required(ErrorMessage = "Debe seleccionar un tipo de acceso")]
         public string TipoAcceso { get; set; }
+
+        [Required(ErrorMessage = "The CmbTipoEnc field is required.")]
         public string CmbTipoEnc { get; set; }
+
+        [Required(ErrorMessage = "Debe seleccionar un centro")]
         public string CmbCentro { get; set; }
+
+        [Required(ErrorMessage = "The TxtClave field is required.")]
         public string TxtClave { get; set; }
     }
 

@@ -294,8 +294,8 @@ namespace EncuestasEvaluacionLiderazgo.Controllers
             {
                 IdTipoEvaluacion = Convert.ToInt32(filtroTipo),
                 IdCentroDWH = idCentro,
-                IDPersonalDWH_Jefe = int.TryParse(idPersonal, out int idJefe) ? idJefe : 0,
                 IDPersonalDWH_Evaluado = int.TryParse(idPersonalEvaluado, out int idEvaluado) ? idEvaluado : 0,
+                IDPersonalDWH_Jefe = FL.IdPersonalDWHJefeDeEvaluado(Convert.ToInt32(idPersonalEvaluado)), // int.TryParse(idPersonal, out int idJefe) ? idJefe : 0,
                 cNombreEvaluado = nombrePersonaEvaluar,
                 cComentarios = comentarioGeneral,
                 nNoEmpAgente = decimal.TryParse(noEmp, out decimal nEmp) ? nEmp : 0,

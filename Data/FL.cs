@@ -167,6 +167,7 @@ namespace EncuestasEvaluacionLiderazgo.Data
         }
 
         /// <summary>
+        /// <summary>
         /// Obtiene los tipos de evaluación disponibles ejecutando el SP sp_traeTiposEvaluacion
         /// </summary>
         /// <returns>DataSet con los tipos de evaluación</returns>
@@ -178,7 +179,17 @@ namespace EncuestasEvaluacionLiderazgo.Data
             }
             catch (Exception ex)
             {
-                throw new Exception("Error al obtener tipos de evaluación: " + ex.Message);
+                System.Diagnostics.Debug.WriteLine($"Error en TraeTiposEvaluacion: {ex.Message}");
+                
+                // Retornar un DataSet vacío en lugar de lanzar excepción
+                // para que la aplicación pueda seguir funcionando
+                DataSet ds = new DataSet();
+                DataTable dt = new DataTable("TiposEvaluacion");
+                dt.Columns.Add("IdTipoEvaluacion", typeof(string));
+                dt.Columns.Add("cDescripcion", typeof(string));
+                dt.Columns.Add("cClaveAcceso", typeof(string));
+                ds.Tables.Add(dt);
+                return ds;
             }
         }
 
@@ -577,6 +588,8 @@ namespace EncuestasEvaluacionLiderazgo.Data
 
         /// <summary>
         /// Obtiene los usuarios administradores activos
+        /// <summary>
+        /// Obtiene los usuarios administradores
         /// </summary>
         /// <returns>DataSet con los usuarios administradores</returns>
         public static DataSet TraeUsuariosAdministradores()
@@ -587,8 +600,40 @@ namespace EncuestasEvaluacionLiderazgo.Data
             }
             catch (Exception ex)
             {
-                throw new Exception("Error al obtener usuarios administradores: " + ex.Message);
+                System.Diagnostics.Debug.WriteLine($"Error en TraeUsuariosAdministradores: {ex.Message}");
+                
+                // Retornar un DataSet vacío en lugar de lanzar excepción
+                // para que la aplicación pueda seguir funcionando
+                DataSet ds = new DataSet();
+                DataTable dt = new DataTable("Administradores");
+                dt.Columns.Add("IdPErsonalDWH", typeof(string));
+                ds.Tables.Add(dt);
+                return ds;
             }
+        }
+
+        /// <summary>
+        /// Obtiene los usuarios con permiso de consultores activos
+        /// <summary>
+        /// Obtiene los usuarios administradores
+        /// </summary>
+        /// <returns>DataSet con los usuarios administradores</returns>
+        public static DataTable TraeUsuariosConsultores()
+        {
+            string query = $@"
+                SELECT *
+                FROM tbl_UsuarioAdministrador
+                WHERE Activo = 1;
+            ";
+
+            var ds = DL.queryGenericoEvaluacionLiderazgo(query);
+
+            if (ds.Tables.Count > 0 && ds.Tables[0].Rows.Count > 0)
+            {
+                return ds.Tables[0];
+            }
+
+            return null;
         }
 
         /// <summary>
@@ -826,8 +871,21 @@ namespace EncuestasEvaluacionLiderazgo.Data
 
             return null;
         }
-    
 
+        public static int IdPersonalDWHJefeDeEvaluado(int IDPersonalDWH_Evaluado)
+        {
+            string query = $"SELECT IDPersonal_Jefe " +
+                           $"FROM Tr3ss.Personal " +
+                           $"WHERE IDPersonal = {IDPersonalDWH_Evaluado} ";
 
+            var ds = DL.QueryGenericoDWH(query);
+
+            if (ds.Rows.Count > 0 && ds.Rows[0].Table.Rows.Count > 0)
+            {
+                return Convert.ToInt32(ds.Rows[0].Table.Rows[0]["IDPersonal_Jefe"]);
+            }
+
+            return 0;
+        }
     }
 }

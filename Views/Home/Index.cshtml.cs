@@ -31,6 +31,17 @@ namespace EncuestasEvaluacionLiderazgo.Views.Home
         }
 
         /// <summary>
+        /// Verifica si el usuario actual es consultor
+        /// </summary>
+        /// <param name="session">Sesión HTTP del usuario</param>
+        /// <returns>True si es consultor, False en caso contrario</returns>
+        public static bool IsConsultor(ISession session)
+        {
+            int userType = GetUserType(session);
+            return userType == (int)TipoUsuario.Consulta;
+        }        
+
+        /// <summary>
         /// Verifica si el usuario actual es evaluador
         /// </summary>
         /// <param name="session">Sesión HTTP del usuario</param>
@@ -52,6 +63,7 @@ namespace EncuestasEvaluacionLiderazgo.Views.Home
             return userType switch
             {
                 (int)TipoUsuario.Administrador => "Administrador",
+                (int)TipoUsuario.Consulta => "Consultor",
                 (int)TipoUsuario.Evaluador => "Evaluador",
                 _ => "Indeterminado"
             };

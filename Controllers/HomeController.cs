@@ -19,9 +19,10 @@ public class HomeController : Controller
         // Validar que el usuario esté autenticado
         if (!HttpContext.Session.GetInt32("UserId").HasValue)
             return RedirectToAction("Login", "Auth");
-
-        // Validar que sea administrador
-        if (HttpContext.Session.GetInt32("UserType") != (int)TipoUsuario.Administrador)
+       
+        // Validar que sea consultor o administrador
+        int? userType = HttpContext.Session.GetInt32("UserType");
+        if (userType != (int)TipoUsuario.Consulta && userType != (int)TipoUsuario.Administrador)
             return RedirectToAction("Login", "Auth");
 
         return View();

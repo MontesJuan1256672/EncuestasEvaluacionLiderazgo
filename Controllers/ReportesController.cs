@@ -39,9 +39,18 @@ namespace EncuestasEvaluacionLiderazgo.Controllers
         }
 
         /// <summary>
+        /// Verifica si el usuario actual es consultor
+        /// </summary>
+        private bool IsConsultor()
+        {
+            return GetCurrentUserType() == (int)EncuestasEvaluacionLiderazgo.Models.TipoUsuario.Consulta;
+        }
+
+
+        /// <summary>
         /// GET: /Reportes
         /// Muestra la página principal del reporteador de resultados
-        /// Solo administradores pueden acceder
+        /// Administradores y consultores pueden acceder
         /// </summary>
         [HttpGet]
         public IActionResult Index()
@@ -49,7 +58,7 @@ namespace EncuestasEvaluacionLiderazgo.Controllers
             if (!IsAuthenticated())
                 return RedirectToAction("Login", "Auth");
 
-            if (!IsAdmin())
+            if (!IsAdmin() && !IsConsultor())
                 return Forbid();
 
             var viewModel = new ReportesIndexViewModel();
@@ -69,7 +78,7 @@ namespace EncuestasEvaluacionLiderazgo.Controllers
             if (!IsAuthenticated())
                 return RedirectToAction("Login", "Auth");
 
-            if (!IsAdmin())
+            if (!IsAdmin() && !IsConsultor())
                 return Forbid();
 
             CargarFiltros(filtros);
@@ -138,6 +147,12 @@ namespace EncuestasEvaluacionLiderazgo.Controllers
                                 DataTable dtPersona = PromediosPorEvaluado(idPersonaInt, idtipoEvaluacionInt, nombrePersona, fechaInicio, fechaFinal, noEmpPersona);
                                 DataTable dtAgentes = FL.AgentesQueContestaronEncuesta(idPersonaInt, fechaInicio, fechaFinal);
 
+                                // Validar que no sean null
+                                if (dtPersona == null || dtAgentes == null)
+                                {
+                                    continue;
+                                }
+
                                 // En la primera iteración, se crea la estructura
                                 if (esFirstRow)
                                 {
@@ -168,7 +183,7 @@ namespace EncuestasEvaluacionLiderazgo.Controllers
                                             dtReporteDePromediosPorEvaluado.ImportRow(dtPersona.Rows[0]);
                                         }
                                     }
-                                    if (dtAgentes != null && dtAgentes.Rows.Count > 0)
+                                    if (dtAgentes.Rows.Count > 0)
                                     {
                                         foreach (DataRow row in dtAgentes.Rows)
                                         {

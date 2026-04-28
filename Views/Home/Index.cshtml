@@ -2,6 +2,7 @@
     ViewData["Title"] = "Home Page";
     var userType = Context.Session.GetInt32("UserType") ?? 0;
     bool isAdmin = userType == (int)EncuestasEvaluacionLiderazgo.Models.TipoUsuario.Administrador;
+    bool isConsultor = userType == (int)EncuestasEvaluacionLiderazgo.Models.TipoUsuario.Consulta;
 }
 
 <div class="text-center">
@@ -33,7 +34,7 @@
         </div>
         
         <!-- Reporteador de Resultados -->
-        @if (isAdmin)
+        @if (isAdmin || isConsultor)
         {
             <div class="bg-white p-6 rounded-lg shadow-md hover:shadow-lg transition">
                 <div class="text-4xl mb-4">📊</div>

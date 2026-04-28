@@ -66,12 +66,17 @@
                     <label for="cmbTipoEnc" class="block text-gray-700 font-semibold mb-2">Tipo de Encuesta</label>
                     <select id="cmbTipoEnc" name="cmbTipoEnc"
                         class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 transition">
-                        @if (tiposEvaluacion != null)
+                        <option value="">-- Seleccione tipo --</option>
+                        @if (tiposEvaluacion != null && tiposEvaluacion.Rows.Count > 0)
                         {
                             @foreach (System.Data.DataRow row in tiposEvaluacion.Rows)
                             {
                                 <option value="@row["IdTipoEvaluacion"]">@row["cDescripcion"]</option>
                             }
+                        }
+                        else
+                        {
+                            <option value="" disabled>No hay tipos disponibles</option>
                         }
                     </select>
                 </div>
