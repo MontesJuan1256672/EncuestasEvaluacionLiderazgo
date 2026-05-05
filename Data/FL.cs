@@ -843,14 +843,16 @@ namespace EncuestasEvaluacionLiderazgo.Data
             return null;
         }
 
-        public static DataSet GetAntiguedadConJefePorEvaluacion(int idPersonalAEvaluar)
+        public static DataSet GetAntiguedadConJefePorEvaluacion(int idPersonalAEvaluar, string fechaInicio, string fechaFin)
         {
-            string query = $"SELECT  Ant.Descripcion, COUNT(*) AS Cantidad " +
+            string query = $"SELECT Ant.Descripcion, COUNT(*) AS Cantidad " +
                         $"FROM [dbo].[eval_Evaluaciones] Eva " +
                         $"INNER JOIN [dbo].[cat_Catalogos] Ant ON Ant.IDCatalogo = Eva.IDAntiguedadConJefe " +
-                        $"WHERE IDPersonalDWH_Evaluado = {idPersonalAEvaluar} " +
-                        $"GROUP BY Ant.Descripcion " +
-                        $"ORDER BY COUNT(*) DESC;";
+                        $"WHERE Eva.IDPersonalDWH_Evaluado = {idPersonalAEvaluar} " +
+                        $"AND Eva.cFecha BETWEEN '{fechaInicio}' AND '{fechaFin}' " +
+                        $"AND Ant.cGrupoCatalogo = 'AntiguedadConJefe' " +
+                        $"GROUP BY Ant.Descripcion, Ant.IDCatalogo " +
+                        $"ORDER BY Ant.IDCatalogo; ";
 
             return DL.queryGenericoEvaluacionLiderazgo(query);
         }

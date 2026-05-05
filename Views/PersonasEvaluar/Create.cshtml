@@ -99,151 +99,159 @@
         let empleadoBuscado = false;
         let idPersonalGlobal = 0;
 
-        document.getElementById('btnBuscar').addEventListener('click', function(e) {
-            e.preventDefault();
-            
-            const numeroEmpleado = document.getElementById('numeroEmpleado').value.trim();
-            const ciudad = document.getElementById('ciudad').value.trim();
-            
-            if (!numeroEmpleado) {
-                alert('Por favor ingresa un número de empleado');
-                return;
-            }
-
-            if (!ciudad) {
-                alert('Por favor selecciona una ciudad');
-                return;
-            }
-
-            // Llamar al endpoint para buscar la información del empleado
-            fetch(`/PersonasEvaluar/GetEmpleado?numeroEmpleado=${encodeURIComponent(numeroEmpleado)}&ciudad=${encodeURIComponent(ciudad)}`)
-                .then(response => {
-                    if (!response.ok) {
-                        throw new Error('Error en la solicitud');
+        document.addEventListener('DOMContentLoaded', function() {
+            // Botón Buscar
+            const btnBuscar = document.getElementById('btnBuscar');
+            if (btnBuscar) {
+                btnBuscar.addEventListener('click', function(e) {
+                    e.preventDefault();
+                    
+                    const numeroEmpleado = document.getElementById('numeroEmpleado').value.trim();
+                    const ciudad = document.getElementById('ciudad').value.trim();
+                    
+                    if (!numeroEmpleado) {
+                        alert('Por favor ingresa un número de empleado');
+                        return;
                     }
-                    return response.json();
-                })
-                .then(data => {
-                    if (data.success) {
-                        // Guardar el ID del personal
-                        idPersonalGlobal = data.idPersonal || 0;
 
-                        // Mostrar datos encontrados
-                        document.getElementById('infoPersona').style.display = 'none';
-                        document.getElementById('errorPersona').style.display = 'none';
-                        document.getElementById('datosPersona').style.display = 'block';
-                        
-                        document.getElementById('nombrePersona').textContent = data.nombre;
-                        document.getElementById('numeroPersona').textContent = data.numeroEmpleado;
-                        
-                        // Marcar que se buscó el empleado
-                        empleadoBuscado = true;
-                    } else {
-                        // Mostrar error
-                        document.getElementById('datosPersona').style.display = 'none';
-                        document.getElementById('infoPersona').style.display = 'none';
-                        document.getElementById('errorPersona').style.display = 'block';
-                        empleadoBuscado = false;
-                        idPersonalGlobal = 0;
+                    if (!ciudad) {
+                        alert('Por favor selecciona una ciudad');
+                        return;
                     }
-                })
-                .catch(error => {
-                    console.error('Error:', error);
-                    document.getElementById('datosPersona').style.display = 'none';
-                    document.getElementById('infoPersona').style.display = 'none';
-                    document.getElementById('errorPersona').style.display = 'block';
-                    empleadoBuscado = false;
-                    idPersonalGlobal = 0;
+
+                    // Llamar al endpoint para buscar la información del empleado
+                    fetch(`/PersonasEvaluar/GetEmpleado?numeroEmpleado=${encodeURIComponent(numeroEmpleado)}&ciudad=${encodeURIComponent(ciudad)}`)
+                        .then(response => {
+                            if (!response.ok) {
+                                throw new Error('Error en la solicitud');
+                            }
+                            return response.json();
+                        })
+                        .then(data => {
+                            if (data.success) {
+                                // Guardar el ID del personal
+                                idPersonalGlobal = data.idPersonal || 0;
+
+                                // Mostrar datos encontrados
+                                document.getElementById('infoPersona').style.display = 'none';
+                                document.getElementById('errorPersona').style.display = 'none';
+                                document.getElementById('datosPersona').style.display = 'block';
+                                
+                                document.getElementById('nombrePersona').textContent = data.nombre;
+                                document.getElementById('numeroPersona').textContent = data.numeroEmpleado;
+                                
+                                // Marcar que se buscó el empleado
+                                empleadoBuscado = true;
+                            } else {
+                                // Mostrar error
+                                document.getElementById('datosPersona').style.display = 'none';
+                                document.getElementById('infoPersona').style.display = 'none';
+                                document.getElementById('errorPersona').style.display = 'block';
+                                empleadoBuscado = false;
+                                idPersonalGlobal = 0;
+                            }
+                        })
+                        .catch(error => {
+                            console.error('Error:', error);
+                            document.getElementById('datosPersona').style.display = 'none';
+                            document.getElementById('infoPersona').style.display = 'none';
+                            document.getElementById('errorPersona').style.display = 'block';
+                            empleadoBuscado = false;
+                            idPersonalGlobal = 0;
+                        });
                 });
-        });
-
-        // Método para guardar la persona
-        document.getElementById('btnGuardar').addEventListener('click', function(e) {
-            e.preventDefault();
-
-            // Validar que se haya buscado el empleado primero
-            if (!empleadoBuscado) {
-                alert('Por favor busca al empleado primero antes de guardar');
-                return;
             }
 
-            // Obtener el ID del tipo de encuesta (puesto)
-            const idTipoEncuesta = document.getElementById('puesto').value.trim();
-
-            // Validar que se haya seleccionado un tipo de encuesta
-            if (!idTipoEncuesta) {
-                alert('Por favor selecciona un tipo de evaluación');
-                return;
-            }
-
-            // Validar que tengamos el ID del personal
-            if (idPersonalGlobal <= 0) {
-                alert('Error: No se pudo obtener la información del empleado. Por favor busca nuevamente.');
-                return;
-            }
-
-            // Mostrar confirmación
-            if (!confirm('¿Estás seguro de que deseas guardar esta persona?')) {
-                return;
-            }
-
-            // Deshabilitar botón mientras se procesa
+            // Botón Guardar
             const btnGuardar = document.getElementById('btnGuardar');
-            btnGuardar.disabled = true;
-            btnGuardar.textContent = '⏳ Guardando...';
-            btnGuardar.style.opacity = '0.6';
-            btnGuardar.style.cursor = 'not-allowed';
+            if (btnGuardar) {
+                btnGuardar.addEventListener('click', function(e) {
+                    e.preventDefault();
 
-            // Enviar datos vía AJAX
-            const formData = new FormData();
-            formData.append('idTipoEncuesta', idTipoEncuesta);
-            formData.append('idPersonal', idPersonalGlobal);
+                    // Validar que se haya buscado el empleado primero
+                    if (!empleadoBuscado) {
+                        alert('Por favor busca al empleado primero antes de guardar');
+                        return;
+                    }
 
-            fetch('/PersonasEvaluar/GuardarPersona', {
-                method: 'POST',
-                body: formData
-            })
-            .then(response => {
-                if (!response.ok) {
-                    throw new Error('Error en la solicitud');
-                }
-                return response.json();
-            })
-            .then(data => {
-                if (data.success) {
-                    // Guardar exitoso
-                    alert(data.message);
-                    // Limpiar formulario
-                    document.getElementById('numeroEmpleado').value = '';
-                    document.getElementById('ciudad').value = '';
-                    document.getElementById('puesto').value = '';
-                    empleadoBuscado = false;
-                    idPersonalGlobal = 0;
-                    document.getElementById('infoPersona').style.display = 'block';
-                    document.getElementById('datosPersona').style.display = 'none';
-                    // Redirigir después de 1 segundo
-                    setTimeout(() => {
-                        window.location.href = '/PersonasEvaluar';
-                    }, 1000);
-                } else {
-                    // Error al guardar
-                    alert('Error: ' + data.message);
-                    // Reabilitar botón
-                    btnGuardar.disabled = false;
-                    btnGuardar.textContent = '✓ Guardar Persona';
-                    btnGuardar.style.opacity = '1';
-                    btnGuardar.style.cursor = 'pointer';
-                }
-            })
-            .catch(error => {
-                console.error('Error:', error);
-                alert('Error al guardar la persona: ' + error.message);
-                // Reabilitar botón
-                btnGuardar.disabled = false;
-                btnGuardar.textContent = '✓ Guardar Persona';
-                btnGuardar.style.opacity = '1';
-                btnGuardar.style.cursor = 'pointer';
-            });
+                    // Obtener el ID del tipo de encuesta (puesto)
+                    const idTipoEncuesta = document.getElementById('puesto').value.trim();
+
+                    // Validar que se haya seleccionado un tipo de encuesta
+                    if (!idTipoEncuesta) {
+                        alert('Por favor selecciona un tipo de evaluación');
+                        return;
+                    }
+
+                    // Validar que tengamos el ID del personal
+                    if (idPersonalGlobal <= 0) {
+                        alert('Error: No se pudo obtener la información del empleado. Por favor busca nuevamente.');
+                        return;
+                    }
+
+                    // Mostrar confirmación
+                    if (!confirm('¿Estás seguro de que deseas guardar esta persona?')) {
+                        return;
+                    }
+
+                    // Deshabilitar botón mientras se procesa
+                    btnGuardar.disabled = true;
+                    btnGuardar.textContent = '⏳ Guardando...';
+                    btnGuardar.style.opacity = '0.6';
+                    btnGuardar.style.cursor = 'not-allowed';
+
+                    // Enviar datos vía AJAX
+                    const formData = new FormData();
+                    formData.append('idTipoEncuesta', idTipoEncuesta);
+                    formData.append('idPersonal', idPersonalGlobal);
+
+                    fetch('/PersonasEvaluar/GuardarPersona', {
+                        method: 'POST',
+                        body: formData
+                    })
+                    .then(response => {
+                        if (!response.ok) {
+                            throw new Error('Error en la solicitud');
+                        }
+                        return response.json();
+                    })
+                    .then(data => {
+                        if (data.success) {
+                            // Guardar exitoso
+                            alert(data.message);
+                            // Limpiar formulario
+                            document.getElementById('numeroEmpleado').value = '';
+                            document.getElementById('ciudad').value = '';
+                            document.getElementById('puesto').value = '';
+                            empleadoBuscado = false;
+                            idPersonalGlobal = 0;
+                            document.getElementById('infoPersona').style.display = 'block';
+                            document.getElementById('datosPersona').style.display = 'none';
+                            // Redirigir después de 1 segundo
+                            setTimeout(() => {
+                                window.location.href = '/PersonasEvaluar';
+                            }, 1000);
+                        } else {
+                            // Error al guardar
+                            alert('Error: ' + data.message);
+                            // Reabilitar botón
+                            btnGuardar.disabled = false;
+                            btnGuardar.textContent = '✓ Guardar Persona';
+                            btnGuardar.style.opacity = '1';
+                            btnGuardar.style.cursor = 'pointer';
+                        }
+                    })
+                    .catch(error => {
+                        console.error('Error:', error);
+                        alert('Error al guardar la persona: ' + error.message);
+                        // Reabilitar botón
+                        btnGuardar.disabled = false;
+                        btnGuardar.textContent = '✓ Guardar Persona';
+                        btnGuardar.style.opacity = '1';
+                        btnGuardar.style.cursor = 'pointer';
+                    });
+                });
+            }
         });
     </script>
 }

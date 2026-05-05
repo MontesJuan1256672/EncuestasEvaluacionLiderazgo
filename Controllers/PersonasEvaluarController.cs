@@ -12,6 +12,7 @@ namespace EncuestasEvaluacionLiderazgo.Controllers
     /// <summary>
     /// Controlador responsable de manejar la gestión de personas a evaluar
     /// </summary>
+    [Route("[controller]")]
     public class PersonasEvaluarController : Controller
     {
         private List<PersonaEvaluar> personasEvaluar = new List<PersonaEvaluar>();

@@ -614,7 +614,7 @@ namespace EncuestasEvaluacionLiderazgo.Controllers
                 nuevaFila["Mas de 6 meses"] = 0;
                 nuevaFila["Menos de 1 mes"] = 0;
 
-                DataSet dsAntiguedad = GetAntiguedadConJefe(idPersonalAEvaluar);
+                DataSet dsAntiguedad = GetAntiguedadConJefe(idPersonalAEvaluar, fechaInicio, fechaFin);
                 if (dsAntiguedad != null && dsAntiguedad.Tables.Count > 0 && dsAntiguedad.Tables[0].Rows.Count > 0)
                 {
                     DataTable tblAntiguedad = dsAntiguedad.Tables[0];
@@ -648,11 +648,11 @@ namespace EncuestasEvaluacionLiderazgo.Controllers
             return dtReporteDePromedios;
         }
 
-        private DataSet GetAntiguedadConJefe(int idPersonalAEvaluar)
+        private DataSet GetAntiguedadConJefe(int idPersonalAEvaluar, string fechaInicio, string fechaFin)
         {
             DataSet dsAntiguedad = new DataSet();
             
-            dsAntiguedad = FL.GetAntiguedadConJefePorEvaluacion(idPersonalAEvaluar);
+            dsAntiguedad = FL.GetAntiguedadConJefePorEvaluacion(idPersonalAEvaluar, fechaInicio, fechaFin);
             return dsAntiguedad;
         }
 

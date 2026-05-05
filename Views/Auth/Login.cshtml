@@ -120,6 +120,27 @@
     </div>
 
     <script>
+        // Mostrar alert de éxito si existe el mensaje (una sola vez)
+        document.addEventListener('DOMContentLoaded', function() {
+            @if (TempData["Success"] != null)
+            {
+                <text>
+                const successMessage = "@TempData["Success"]";
+                const messageId = 'success_' + new Date().getTime(); // Crear ID único por timestamp
+                
+                // Verificar si ya se mostró este mensaje en esta sesión
+                const shownMessages = JSON.parse(sessionStorage.getItem('shownSuccessMessages') || '[]');
+                
+                if (!shownMessages.includes(messageId)) {
+                    alert(successMessage);
+                    // Guardar que se mostró este mensaje
+                    shownMessages.push(messageId);
+                    sessionStorage.setItem('shownSuccessMessages', JSON.stringify(shownMessages));
+                }
+                </text>
+            }
+        });
+
         // Mostrar/ocultar campos según el tipo de acceso
         document.getElementById('tipoAcceso').addEventListener('change', function () {
             const tipo = this.value;

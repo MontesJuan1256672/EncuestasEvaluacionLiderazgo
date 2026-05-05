@@ -153,16 +153,22 @@
                             </div>
 
                             <!-- Comentario Abierto -->
-                            <div class="mt-6 pt-6 border-t">
-                                <label for="@pregunta.NombreCampoComentario" class="block text-sm font-semibold text-gray-700 mb-2 comentario-label" data-es="💬 Comentario (Opcional)" data-en="💬 Comment (Optional)">
-                                    💬 Comentario (Opcional)
-                                </label>
-                                <textarea id="@pregunta.NombreCampoComentario" 
-                                          name="@pregunta.NombreCampoComentario"
-                                          rows="3"
-                                          placeholder="Deja un comentario o sugerencia relacionado con esta pregunta..."
-                                          class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 resize-none comentario-placeholder" data-es="Deja un comentario o sugerencia relacionado con esta pregunta..." data-en="Leave a comment or suggestion related to this question..."></textarea>
-                            </div>
+                            @if (pregunta.NumeroPregunta == 16 && Model.FiltroTipo == "2")
+                            {
+                                <div class="mt-6 pt-6 border-t">
+                                    <label for="@pregunta.NombreCampoComentario" class="block text-sm font-semibold text-gray-700 mb-2 comentario-label" data-es="💬 Comentario (Obligatorio)" data-en="💬 Comment (Required)">
+                                        💬 Comentario (Obligatorio)
+                                    </label>
+                                    <textarea id="@pregunta.NombreCampoComentario" 
+                                              name="@pregunta.NombreCampoComentario"
+                                              rows="3"
+                                              placeholder="Deja un comentario o sugerencia relacionado con esta pregunta..."
+                                              class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 resize-none comentario-placeholder" 
+                                              data-es="Deja un comentario o sugerencia relacionado con esta pregunta..." 
+                                              data-en="Leave a comment or suggestion related to this question..."
+                                              data-obligatorio="true"></textarea>
+                                </div>
+                            }
                         </div>
                     }
                 }
@@ -391,6 +397,9 @@
             document.querySelectorAll('.respuesta-select').forEach(select => {
                 select.classList.remove('border-red-500', 'ring-2', 'ring-red-300');
             });
+            document.querySelectorAll('textarea[data-obligatorio="true"]').forEach(textarea => {
+                textarea.classList.remove('border-red-500', 'ring-2', 'ring-red-300');
+            });
             document.getElementById('personaEvaluar')?.classList.remove('border-red-500', 'ring-2', 'ring-red-300');
             document.getElementById('tiempoConPersona')?.classList.remove('border-red-500', 'ring-2', 'ring-red-300');
 
@@ -437,6 +446,15 @@
                 }
             }
 
+            // Validar comentarios obligatorios (pregunta 16 cuando filtroTipo = 2)
+            document.querySelectorAll('textarea[data-obligatorio="true"]').forEach(textarea => {
+                if (!textarea.value.trim()) {
+                    textarea.classList.add('border-red-500', 'ring-2', 'ring-red-300');
+                    errores.push(idiomaActual === 'en' ? 'Question 16 comment is required' : 'El comentario de la pregunta 16 es obligatorio');
+                    if (!primerError) primerError = textarea;
+                }
+            });
+
             // Si hay errores, mostrar mensaje y prevenir envío
             if (errores.length > 0) {
                 e.preventDefault();
@@ -477,6 +495,15 @@
             document.querySelectorAll('.respuesta-select, #personaEvaluar, #tiempoConPersona').forEach(select => {
                 select.addEventListener('change', function () {
                     if (this.value) {
+                        this.classList.remove('border-red-500', 'ring-2', 'ring-red-300');
+                    }
+                });
+            });
+
+            // Limpiar estilo de error cuando el usuario escribe en los comentarios obligatorios
+            document.querySelectorAll('textarea[data-obligatorio="true"]').forEach(textarea => {
+                textarea.addEventListener('input', function () {
+                    if (this.value.trim()) {
                         this.classList.remove('border-red-500', 'ring-2', 'ring-red-300');
                     }
                 });

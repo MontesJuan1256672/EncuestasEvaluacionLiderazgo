@@ -473,7 +473,7 @@
             const filtroTipo = '@ViewBag.FiltroTipo';
 
             // Realizar la solicitud AJAX para desactivar la pregunta
-            fetch(`/EditaEncuesta/DeletePregunta?idPregunta=${idPregunta}`, {
+            fetch(`/editaencuesta/DeletePregunta?idPregunta=${idPregunta}`, {
                 method: 'POST',
                 headers: {
                     'X-Requested-With': 'XMLHttpRequest'
@@ -525,7 +525,7 @@
             const idPreguntaAnterior = parseInt(celdasAnterior[0].textContent.trim());
             
             // Realizar la solicitud AJAX para mover la pregunta hacia arriba
-            fetch(`/EditaEncuesta/MoverPreguntaArriba?idPregunta=${idPregunta}&nOrden=${nOrden}&idPreguntaAnterior=${idPreguntaAnterior}`, {
+            fetch(`/editaencuesta/MoverPreguntaArriba?idPregunta=${idPregunta}&nOrden=${nOrden}&idPreguntaAnterior=${idPreguntaAnterior}`, {
                 method: 'POST',
                 headers: {
                     'X-Requested-With': 'XMLHttpRequest'
@@ -574,7 +574,7 @@
             const idPreguntaSiguiente = parseInt(celdasSiguiente[0].textContent.trim());
             
             // Realizar la solicitud AJAX para mover la pregunta hacia abajo
-            fetch(`/EditaEncuesta/MoverPreguntaAbajo?idPregunta=${idPregunta}&nOrden=${nOrden}&idPreguntaSiguiente=${idPreguntaSiguiente}`, {
+            fetch(`/editaencuesta/MoverPreguntaAbajo?idPregunta=${idPregunta}&nOrden=${nOrden}&idPreguntaSiguiente=${idPreguntaSiguiente}`, {
                 method: 'POST',
                 headers: {
                     'X-Requested-With': 'XMLHttpRequest'
@@ -601,30 +601,36 @@
         }
 
         function ActualizaClaveAcceso(button) {
-            // Obtener el valor de la clave de acceso
             const cClaveAcceso = document.getElementById('claveAcceso').value;
-            
-            // Validar que la clave no esté vacía
+
             if (!cClaveAcceso || cClaveAcceso.trim() === '') {
                 alert('La clave de acceso no puede estar vacía.');
                 return;
             }
-            
-            // Obtener el filtroTipo (idTipoEvaluacion)
+
             const filtroTipo = '@ViewBag.FiltroTipo';
-            
-            // Realizar la solicitud AJAX para actualizar la clave de acceso
-            fetch(`/EditaEncuesta/ActualizaClaveAcceso?filtroTipo=${filtroTipo}&cClaveAcceso=${encodeURIComponent(cClaveAcceso)}`, {
+            const token = document.querySelector('input[name="__RequestVerificationToken"]')?.value || '';
+
+            const url = '@Url.Action("ActualizaClaveAcceso", "EditaEncuesta")';
+
+            fetch(url, {
                 method: 'POST',
                 headers: {
+                    'Content-Type': 'application/x-www-form-urlencoded',
                     'X-Requested-With': 'XMLHttpRequest'
-                }
+                },
+                body: new URLSearchParams({
+                    'filtroTipo': filtroTipo,
+                    'cClaveAcceso': cClaveAcceso,
+                    '__RequestVerificationToken': token
+                })
             })
             .then(response => {
+                console.log('Response status:', response.status);
                 if (response.ok) {
                     return response.json();
                 }
-                throw new Error('Error en la solicitud');
+                throw new Error(`HTTP ${response.status}: Error en la solicitud`);
             })
             .then(data => {
                 if (data.success) {

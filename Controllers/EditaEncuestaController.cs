@@ -11,7 +11,7 @@ namespace EncuestasEvaluacionLiderazgo.Controllers
     /// <summary>
     /// Controlador responsable de manejar la edición de encuestas
     /// </summary>
-    [Route("[controller]")]
+    [Route("editaencuesta")]
     public class EditaEncuestaController : Controller
     {
         private readonly IEncuestaService _encuestaService;
@@ -87,7 +87,7 @@ namespace EncuestasEvaluacionLiderazgo.Controllers
         /// Actualiza una encuesta existente
         /// Solo administradores pueden editar encuestas
         /// </summary>
-        [HttpPost("Update")]
+        [HttpPost("update")]
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> Update(Encuesta encuesta)
         {
@@ -122,7 +122,7 @@ namespace EncuestasEvaluacionLiderazgo.Controllers
         /// Publica una encuesta
         /// Solo administradores pueden publicar encuestas
         /// </summary>
-        [HttpPost("Publish")]
+        [HttpPost("publish")]
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> Publish(int id)
         {
@@ -156,7 +156,7 @@ namespace EncuestasEvaluacionLiderazgo.Controllers
         /// Elimina una encuesta
         /// Solo administradores pueden eliminar encuestas
         /// </summary>
-        [HttpPost("Delete")]
+        [HttpPost("delete")]
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> Delete(int id)
         {
@@ -192,7 +192,7 @@ namespace EncuestasEvaluacionLiderazgo.Controllers
         /// <param name="id">ID de la encuesta</param>
         /// <param name="estado">Estado a actualizar (true = Activo, false = Baja)</param>
         [HttpPost]
-        [Route("UpdateEstado/{filtroTipo}")]
+        [Route("updateestado/{filtroTipo}")]
         public async Task<IActionResult> UpdateEstado(int filtroTipo, int id, string estado)
         {
             if (!IsAuthenticated())
@@ -228,7 +228,7 @@ namespace EncuestasEvaluacionLiderazgo.Controllers
         /// Crea una nueva pregunta en una encuesta
         /// </summary>
         [HttpPost]
-        [Route("CreatePregunta/{filtroTipo}")]
+        [Route("createpregunta/{filtroTipo}")]
         public async Task<IActionResult> CreatePregunta(int filtroTipo, int encuestaId, string cPregunta, 
                                                         string cPregunta_Ingles, int cCompetencia, 
                                                         int cActividad, int cDescripcion, int nOrden)
@@ -277,7 +277,7 @@ namespace EncuestasEvaluacionLiderazgo.Controllers
         /// Actualiza una pregunta existente en una encuesta
         /// </summary>
         [HttpPost]
-        [Route("UpdatePregunta/{filtroTipo}")]
+        [Route("updatepregunta/{filtroTipo}")]
         public async Task<IActionResult> UpdatePregunta(int filtroTipo, int encuestaId, int idPregunta, 
                                                         string cPregunta, string cPregunta_Ingles, 
                                                         int cCompetencia, int cActividad, int cDescripcion, int nOrden)
@@ -334,7 +334,7 @@ namespace EncuestasEvaluacionLiderazgo.Controllers
         /// Elimina (desactiva) una pregunta existente de una encuesta
         /// </summary>
         [HttpPost]
-        [Route("DeletePregunta")]
+        [Route("deletepregunta")]
         public IActionResult DeletePregunta(int idPregunta)
         {
             if (!IsAuthenticated())
@@ -371,7 +371,7 @@ namespace EncuestasEvaluacionLiderazgo.Controllers
         /// Intercambia el orden con la pregunta anterior
         /// </summary>
         [HttpPost]
-        [Route("MoverPreguntaArriba")]
+        [Route("moverpreguntaarriba")]
         public IActionResult MoverPreguntaArriba(int idPregunta, int nOrden, int idPreguntaAnterior)
         {
             if (!IsAuthenticated())
@@ -424,7 +424,7 @@ namespace EncuestasEvaluacionLiderazgo.Controllers
         /// Intercambia el orden con la pregunta siguiente
         /// </summary>
         [HttpPost]
-        [Route("MoverPreguntaAbajo")]
+        [Route("moverpreguntaabajo")]
         public IActionResult MoverPreguntaAbajo(int idPregunta, int nOrden, int idPreguntaSiguiente)
         {
             if (!IsAuthenticated())
@@ -476,7 +476,8 @@ namespace EncuestasEvaluacionLiderazgo.Controllers
         /// Actualiza la clave de acceso de una encuesta
         /// </summary>
         [HttpPost]
-        [Route("ActualizaClaveAcceso")]
+        [Route("actualizaclaveacceso")]
+        [ValidateAntiForgeryToken]
         public IActionResult ActualizaClaveAcceso(int filtroTipo, string cClaveAcceso)
         {
             if (!IsAuthenticated())
