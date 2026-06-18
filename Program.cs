@@ -39,6 +39,9 @@ app.UseAuthorization();
 
 app.MapStaticAssets();
 
+// Mapear rutas de atributos (attribute routing) - NECESARIO para [Route(...)]
+app.MapControllers();
+
 // Ruta por defecto general que permite acceder a todos los controladores
 app.MapControllerRoute(
     name: "default",

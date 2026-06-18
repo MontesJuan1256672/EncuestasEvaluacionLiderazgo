@@ -6,6 +6,7 @@ using EncuestasEvaluacionLiderazgo.Data;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
+using System.Data;
 
 namespace EncuestasEvaluacionLiderazgo.Controllers
 {
@@ -352,9 +353,24 @@ namespace EncuestasEvaluacionLiderazgo.Controllers
                 // Llamar al método FL.BuscarEmpleado
                 var dtEmpleado = FL.BuscarEmpleado(noemp, idUbicacionInt);
 
+                // Detectar si hay un error en la conexión al DWH
+                if (dtEmpleado != null && dtEmpleado.Rows.Count > 0 && dtEmpleado.Columns.Contains("Error"))
+                {
+                    string errorDWH = dtEmpleado.Rows[0]["Error"]?.ToString() ?? "Error desconocido en DWH";
+                    System.Diagnostics.Debug.WriteLine($"[GetEmpleado] Error DWH: {errorDWH}");
+                    return Json(new { success = false, message = $"Error de conexión al sistema: {errorDWH}" });
+                }
+
                 // Validar si se encontró el empleado
                 if (dtEmpleado == null || dtEmpleado.Rows.Count == 0)
                     return Json(new { success = false, message = "Empleado no encontrado" });
+
+                // Validar que tenga las columnas esperadas
+                if (!dtEmpleado.Columns.Contains("IDPersonal") || !dtEmpleado.Columns.Contains("Nombre"))
+                {
+                    System.Diagnostics.Debug.WriteLine($"[GetEmpleado] Columnas no esperadas. Columnas encontradas: {string.Join(", ", dtEmpleado.Columns.Cast<DataColumn>().Select(c => c.ColumnName))}");
+                    return Json(new { success = false, message = "Error: Estructura de datos inesperada en el sistema" });
+                }
 
                 // Extraer datos del empleado
                 var row = dtEmpleado.Rows[0];
@@ -365,6 +381,7 @@ namespace EncuestasEvaluacionLiderazgo.Controllers
             }
             catch (Exception ex)
             {
+                System.Diagnostics.Debug.WriteLine($"[GetEmpleado] Excepción: {ex.Message} - {ex.StackTrace}");
                 return Json(new { success = false, message = $"Error: {ex.Message}" });
             }
         }

@@ -120,7 +120,7 @@
                     }
 
                     // Llamar al endpoint para buscar la información del empleado
-                    fetch(`/PersonasEvaluar/GetEmpleado?numeroEmpleado=${encodeURIComponent(numeroEmpleado)}&ciudad=${encodeURIComponent(ciudad)}`)
+                    fetch(`@Url.Action("GetEmpleado", "PersonasEvaluar")?numeroEmpleado=${encodeURIComponent(numeroEmpleado)}&ciudad=${encodeURIComponent(ciudad)}`)
                         .then(response => {
                             if (!response.ok) {
                                 throw new Error('Error en la solicitud');
@@ -205,7 +205,7 @@
                     formData.append('idTipoEncuesta', idTipoEncuesta);
                     formData.append('idPersonal', idPersonalGlobal);
 
-                    fetch('/PersonasEvaluar/GuardarPersona', {
+                    fetch('@Url.Action("GuardarPersona", "PersonasEvaluar")', {
                         method: 'POST',
                         body: formData
                     })
@@ -229,7 +229,7 @@
                             document.getElementById('datosPersona').style.display = 'none';
                             // Redirigir después de 1 segundo
                             setTimeout(() => {
-                                window.location.href = '/PersonasEvaluar';
+                                window.location.href = '@Url.Action("Index", "PersonasEvaluar")';
                             }, 1000);
                         } else {
                             // Error al guardar
